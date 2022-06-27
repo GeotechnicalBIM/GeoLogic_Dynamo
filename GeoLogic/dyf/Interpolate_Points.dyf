@@ -1,0 +1,473 @@
+{
+  "Uuid": "c8cf9775-0774-4b72-b2f2-193127025f98",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Geometry",
+  "Description": "Implementation of various interpolation methods. Interpolates z-values based on x,y values",
+  "Name": "Interpolate_Points",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "Autodesk.DesignScript.Geometry.Point": {
+        "Key": "Autodesk.DesignScript.Geometry.Point",
+        "Value": "ProtoGeometry.dll"
+      },
+      "DesignScript.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      },
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\n\r\ndebug = {}\r\nimport System\r\nimport sys\r\n\r\ntry:    \r\n    dirAppLoc = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) \r\n    folder = (dirAppLoc + r'\\python-3.8.3-embed-amd64\\Lib\\site-packages')\r\n    sys.path.append(folder)\r\nexcept FileNotFoundError as err:\r\n    debug.update({\"ImportErrorPath\" : \"site-packages folder not found in {0}. Please install all a custom python package first, e.g. pandas. Therefore follow the instructions on  https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation \".format(folder)})\r\n\r\n\r\n\r\ntry:\r\n    import clr\r\n    import os\r\n    import math\r\n    import copy\r\n    import numpy as np\r\n\r\n    from pykrige.uk import UniversalKriging\r\n    import pykrige.kriging_tools as kt\r\n    from pykrige.ok import OrdinaryKriging\r\n    import matplotlib.pyplot as plt\r\n\r\n    from scipy.interpolate import RBFInterpolator\r\n    from scipy.interpolate import LinearNDInterpolator\r\n    from scipy.spatial import Delaunay\r\n    from scipy.stats.qmc import Halton\r\n\r\nexcept ImportError as err:\r\n    debug.update({\"ImportError\": \"A Python Module was not found - See ImportErrorInfo. Please install. For help on using external packages see https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation. If this package is not needed for your interpolation method and you don´t want to install it, please outcomment manually in the python script\".format(used_module)})\r\n    debug.update({\"ImportErrorInfo\": \"{}\".format(err)})\r\n\r\n\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\nfrom Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\n# Color Nodes from Dynamo\r\nclr.AddReference('DSCoreNodes')\r\nimport DSCore\r\nfrom DSCore import Color\r\n\r\n\r\n# Import GeometryColor _ Display in Dynamo\r\nclr.AddReference('GeometryColor')\r\nfrom Modifiers import GeometryColor\r\n\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\nimport System\r\n\r\n# Import DocumentManager and Transaction Manger\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\n# Revit API\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\n# Revit API Usier Ingerfavce\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n#Preparing input from dynamo to revit\r\n#element = UnwrapElement(IN[0])\r\n#TransactionManager.Instance.EnsureInTransaction(doc)\r\n#TransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\nPointsKriging = []\r\ndef UnivKriging(Pts, IntBoundaries=True, resolution=5,resolution_x=5, resolution_y=5, VariogramModel=\"linear\", DriftTerms=\"regional_linear\", ToBeReturned=\"DynamoPoints\"):\r\n    # get max and min x and y values of the points to krige from\r\n    PtsX, PtsY, PointsLst, PointsKriging = [],[],[],[]\r\n    for pt in Pts:\r\n        PtsX.append(pt.X)\r\n        PtsY.append(pt.Y)\r\n    PtsXmax, PtsYmax, PtsXmin, PtsYmin = max(PtsX), max(PtsY), min(PtsX), min(PtsY)\r\n    # Setzten der räumlichen Grenzen auf Ganzzahlen (also statt 56.7 -> 57 m)\r\n    if IntBoundaries == True:\r\n        PtsXmax = float(math.ceil(PtsXmax))\r\n        PtsYmax = float(math.ceil(PtsYmax))\r\n        PtsXmin = float(math.floor(PtsXmin))\r\n        PtsYmin = float(math.floor(PtsYmin))        \r\n    gridx = np.arange(PtsXmin,PtsXmax+resolution_x,resolution_x)\r\n    gridy = np.arange(PtsYmin,PtsYmax+resolution_y,resolution_y)\r\n\r\n    for i in Pts:\r\n        PointsLst.append([i.X, i.Y, i.Z]);\r\n    data = np.array(PointsLst)\r\n    UK = UniversalKriging(\r\n        data[:, 0],\r\n        data[:, 1],\r\n        data[:, 2],\r\n        variogram_model=VariogramModel,\r\n        drift_terms=[DriftTerms]\r\n    )    \r\n    z, ss = UK.execute(\"grid\", gridx, gridy)\r\n    if ToBeReturned == \"DynamoPoints\":\r\n        for i in range(len(z)):\r\n            sublists = z[i]\r\n            for i2 in range(len(sublists)):\r\n                i2val = sublists[i2]\r\n                PointKriging = DynamoPoint.ByCoordinates(gridx[i2],gridy[i],i2val)\r\n                PointsKriging.append(PointKriging)\r\n        return PointsKriging  \r\n\r\n\r\n# Ordiniary Kriging validated with example 1 from Chapter 3 from Gau´s Dissertation (difference 16.796 ist, 16,791 soll)\r\ndef OrdiKriging(Pts, IntBoundaries=True, resolution=5,resolution_x=5, resolution_y=5, VariogramModel=\"linear\",Verbose=False, ToBeReturned=\"DynamoPoints\"):\r\n    # get max and min x and y values of the points to krige from\r\n    PtsX, PtsY, PointsLst, PointsKriging = [],[],[],[]\r\n    for pt in Pts:\r\n        PtsX.append(pt.X)\r\n        PtsY.append(pt.Y)\r\n    PtsXmax, PtsYmax, PtsXmin, PtsYmin = max(PtsX), max(PtsY), min(PtsX), min(PtsY)\r\n    # Setzten der räumlichen Grenzen auf Ganzzahlen (also statt 56.7 -> 57 m)\r\n    if IntBoundaries == True:\r\n        PtsXmax = float(math.ceil(PtsXmax))\r\n        PtsYmax = float(math.ceil(PtsYmax))\r\n        PtsXmin = float(math.floor(PtsXmin))\r\n        PtsYmin = float(math.floor(PtsYmin))        \r\n    gridx = np.arange(PtsXmin,PtsXmax+resolution_x,resolution_x)\r\n    gridy = np.arange(PtsYmin,PtsYmax+resolution_y,resolution_y)\r\n\r\n    for i in Pts:\r\n        PointsLst.append([i.X, i.Y, i.Z]);\r\n    data = np.array(PointsLst)\r\n    OK = OrdinaryKriging(\r\n        data[:, 0],\r\n        data[:, 1],\r\n        data[:, 2],\r\n        variogram_model=VariogramModel,\r\n        verbose=Verbose,\r\n\r\n    )    \r\n    z, ss = OK.execute(\"grid\", gridx, gridy)\r\n    if ToBeReturned == \"DynamoPoints\":\r\n        for i in range(len(z)):\r\n            sublists = z[i]\r\n            for i2 in range(len(sublists)):\r\n                i2val = sublists[i2]\r\n                PointKriging = DynamoPoint.ByCoordinates(gridx[i2],gridy[i],i2val)\r\n                PointsKriging.append(PointKriging)\r\n        return PointsKriging  \r\n\r\n\r\n# For simple Kriging see blog:\r\n#http://connor-johnson.com/2014/03/20/simple-kriging-in-python/ \r\n\r\n\r\n\r\n\r\ndef RBF(Pts, IntBoundaries=True, resolution=5, resolution_x=5, resolution_y=5, ToBeReturned=\"DynamoPoints\", kernel = \"linear\"):\r\n# for documentation see: https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.interpolate.RBFInterpolator.html#scipy.interpolate.RBFInterpolator\r\n    PtsX, PtsY, PointsLst, PtsZ, PtsXY, PointsRBF = [],[],[],[],[],[]\r\n    for pt in Pts:\r\n        PtsX.append(pt.X)\r\n        PtsY.append(pt.Y)\r\n        PtsZ.append(pt.Z)\r\n    PtsXmax, PtsYmax, PtsXmin, PtsYmin = max(PtsX), max(PtsY), min(PtsX), min(PtsY)\r\n    # Setzten der räumlichen Grenzen auf Ganzzahlen (also statt 56.7 -> 57 m)\r\n    if IntBoundaries == True:\r\n        PtsXmax = float(math.ceil(PtsXmax))\r\n        PtsYmax = float(math.ceil(PtsYmax))\r\n        PtsXmin = float(math.floor(PtsXmin))\r\n        PtsYmin = float(math.floor(PtsYmin))        \r\n    gridx = np.arange(PtsXmin,PtsXmax+resolution_x,resolution_x)\r\n    gridy = np.arange(PtsYmin,PtsYmax+resolution_y,resolution_y)\r\n    \r\n    for i in Pts:\r\n        PointsLst.append([i.X, i.Y, i.Z])\r\n        PtsXY.append([i.X,i.Y])\r\n    xobs = np.array(PtsXY)\r\n    yobs = PtsZ\r\n    xgrid = np.mgrid[int(PtsXmin):int(PtsXmax)+resolution_x:resolution_x, int(PtsYmin):int(PtsYmax)+resolution_y:resolution_y]\r\n    #xgrid = np.mgrid[int(PtsYmin):int(PtsYmax)+resolution:resolution, int(PtsXmin):int(PtsXmax)+resolution:resolution]\r\n    xflat = xgrid.reshape(2, -1).T\r\n    yflat = RBFInterpolator(xobs, yobs,kernel=kernel)(xflat)   \r\n    dimX=int(PtsXmax/resolution_x +1 - PtsXmin/resolution_x)\r\n    dimY=int(PtsYmax/resolution_y +1 - PtsYmin/resolution_y)\r\n    ygrid = yflat.reshape(dimX, dimY)\r\n    #return ygrid    \r\n    if ToBeReturned == \"DynamoPoints\":\r\n        for i in range(len(yflat)):\r\n            xflat_x= xflat[i,0]\r\n            xflat_y= xflat[i,1]\r\n            yflat_z= yflat[i]\r\n            #listout.append([xflat_x,xflat_y,yflat_z])\r\n            PointsRBF.append(DynamoPoint.ByCoordinates(xflat_x,xflat_y,yflat_z))\r\n        return PointsRBF\r\n\r\n\r\ndef IDW_get_h(lon, lat, Pts):\r\n# Code based on https://www.programmersought.com/article/95383860708/\r\n    p0 = [lon, lat]\r\n    sum0 = 0\r\n    sum1 = 0\r\n    temp = []\r\n    # Traverse to get the distance of this point from all sampling points\r\n    for point in Pts:\r\n        if lon == point[0] and lat == point[1]:\r\n            return point[2]\r\n        Di = distance(p0, point)\r\n        # new comes out an object, otherwise it will change the original lst value\r\n        ptn = copy.deepcopy(point)\r\n        ptn.append(Di)\r\n        temp.append(ptn)\r\n        # According to the above ptn.append () value sorted from small to large\r\n    temp1 = sorted(temp, key=lambda point: point[3])\r\n    # Traverse the first 15 points of the sort, find sum0 and sum1 according to the formula\r\n    for point in temp1[0:15]:\r\n        sum0 += point[2] / point[3]\r\n        sum1 += 1 / point[3]\r\n    return sum0 / sum1\r\n\r\n\r\ndef distance(p, pi):\r\n    dis = (p[0] - pi[0]) * (p[0] - pi[0]) + (p[1] - pi[1]) * (p[1] - pi[1])\r\n    m_result = math.sqrt(dis)\r\n    return m_result            \r\n\r\n\r\ndef IDW (Pts, IntBoundaries=True, resolution=5, resolution_x=5, resolution_y=5, ToBeReturned=\"DynamoPoints\"):\r\n# for documentation see: https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.interpolate.RBFInterpolator.html#scipy.interpolate.RBFInterpolator\r\n    # Kernel can be        \r\n        #‘linear’ : -r\r\n        #‘thin_plate_spline’ : r**2 * log(r)\r\n        #‘cubic’ : r**3\r\n        #‘quintic’ : -r**5\r\n        #‘multiquadric’ : -sqrt(1 + r**2)\r\n        #‘inverse_multiquadric’ : 1/sqrt(1 + r**2)\r\n        #‘inverse_quadratic’ : 1/(1 + r**2)\r\n        #‘gaussian’ : exp(-r**2)\r\n\r\n\r\n    PtsX, PtsY, PointsLst, PtsZ, PtsXY, PtsXYZ, PointsIDW = [],[],[],[],[],[],[]\r\n    for pt in Pts:\r\n        PtsX.append(pt.X), PtsY.append(pt.Y), PtsZ.append(pt.Z)\r\n        sublist = []\r\n        sublist.append(pt.X), sublist.append(pt.Y), sublist.append(pt.Z)\r\n        PtsXYZ.append(sublist)\r\n    PtsXmax, PtsYmax, PtsXmin, PtsYmin = max(PtsX), max(PtsY), min(PtsX), min(PtsY)\r\n    # Setzten der räumlichen Grenzen auf Ganzzahlen (also statt 56.7 -> 57 m)\r\n    if IntBoundaries == True:\r\n        PtsXmax = float(math.ceil(PtsXmax))\r\n        PtsYmax = float(math.ceil(PtsYmax))\r\n        PtsXmin = float(math.floor(PtsXmin))\r\n        PtsYmin = float(math.floor(PtsYmin))   \r\n    gridx = np.arange(PtsXmin,PtsXmax+resolution_x,resolution_x)\r\n    gridy = np.arange(PtsYmin,PtsYmax+resolution_y,resolution_y)\r\n    for i in gridx:     \r\n        for i2 in gridy:\r\n            z = IDW_get_h(i, i2, PtsXYZ)\r\n            P1 = DynamoPoint.ByCoordinates(i,i2,z)\r\n            PointsIDW.append(P1)            \r\n    return PointsIDW\r\n\r\ndef LinearInterpolation (Pts, IntBoundaries=True, resolution=5, resolution_x=5, resolution_y=5, ToBeReturned=\"DynamoPoints\"):\r\n# for documentation see: https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.LinearNDInterpolator.html\r\n    PtsX, PtsY, PointsLst, PtsZ, PtsXY, PointsLinear = [],[],[],[],[],[]\r\n    for pt in Pts:\r\n        PtsX.append(pt.X)\r\n        PtsY.append(pt.Y)\r\n        PtsZ.append(pt.Z)\r\n    PtsXmax, PtsYmax, PtsXmin, PtsYmin = max(PtsX), max(PtsY), min(PtsX), min(PtsY)\r\n    if IntBoundaries == True:\r\n        PtsXmax = float(math.ceil(PtsXmax))\r\n        PtsYmax = float(math.ceil(PtsYmax))\r\n        PtsXmin = float(math.floor(PtsXmin))\r\n        PtsYmin = float(math.floor(PtsYmin))        \r\n    gridx = np.arange(PtsXmin,PtsXmax+resolution_x,resolution_x)\r\n    gridy = np.arange(PtsYmin,PtsYmax+resolution_y,resolution_y)\r\n    X, Y = np.meshgrid(gridx, gridy)\r\n    interp = LinearNDInterpolator(list(zip(PtsX, PtsY)), PtsZ)\r\n    Z = interp(X,Y)\r\n    for i in range(len(X)):\r\n        for i2 in range(len(X[i])):\r\n            PointsLinear.append(DynamoPoint.ByCoordinates(X[i][i2], Y[i][i2], Z[i][i2]))\r\n    return PointsLinear\r\n\r\n\r\n# Assign Inputs IN of the python node\r\ninput0 = IN[0]\r\nif len(IN) > 1:\r\n    options = IN[1]\r\n    if \"wfm_in\" in options.keys():\r\n        wfm_in = options[\"wfm_in\"]\r\n    if not bool(wfm_in) or type(wfm_in)!=int:    \r\n        try:\r\n            wfm_in = int(wfm_in)\r\n        except:\r\n            wfm_in = 0 \r\n    if \"addpoints\" in options.keys():\r\n        addpoints = options[\"addpoints\"]        \r\nelse: wfm_in = 0\r\ninterpolator = IN[2]\r\nresolution = IN[3]\r\n\r\n\r\n# Allows nested lists / dicts / tuples in the input 0. Two dimensonal only. \r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\n    try:\r\n        input0[0].extend(addpoints)\r\n    except NameError:\r\n        pass\r\n    out0 = [[]]\r\nelse: \r\n    # current implementation: only a list can be added for addtional points (not a nested one)\r\n    for ind in range(len(input0)):\r\n        try:\r\n            # needs to be checked (nesting)\r\n            input0 = input0.extend(addpoints)\r\n        except NameError:\r\n            pass\r\n    to_be_flattend = False\r\n    out0 = []\r\n\r\n\r\n\r\ntry:\r\n    Points = input0\r\n    # go through options\r\n    resolution_x = options[\"resolution_x\"] if \"resolution_x\" in options else resolution\r\n    resolution_y = options[\"resolution_y\"] if \"resolution_y\" in options else resolution\r\n    IntBoundaries = options[\"IntBoundaries\"] if \"IntBoundaries\" in options else True    \r\n    VariogramModel = options[\"VariogramModel\"] if \"VariogramModel\" in options else \"linear\" \r\n    kernel = options[\"kernel\"] if \"kernel\" in options else \"linear\"\r\n    \r\n    if interpolator==\"IDW\":\r\n        out0.append(IDW(Points, resolution=resolution, resolution_x=resolution_x, resolution_y=resolution_y, IntBoundaries=IntBoundaries))\r\n    if interpolator in [\"lin\", \"linear\", \"LIN\", \"Lin\", \"Linear\"]:\r\n        out0.append(LinearInterpolation(Points, resolution=resolution, resolution_x=resolution_x, resolution_y=resolution_y, IntBoundaries=IntBoundaries))\r\n    if interpolator==\"RBF\": \r\n        out0.append(RBF(Points, resolution=resolution, resolution_x=resolution_x, resolution_y=resolution_y, IntBoundaries=IntBoundaries, kernel=kernel))\r\n    if interpolator in [\"OrdiKriging\", \"OKriging\", \"Krig\", \"Kriging\"]:\r\n        out0.append(OrdiKriging(Points, resolution=resolution, resolution_x=resolution_x, resolution_y=resolution_y, IntBoundaries=IntBoundaries, VariogramModel=VariogramModel))\r\n    if interpolator==\"UnivKriging\":\r\n        out0.append(UnivKriging(Points, resolution=resolution, resolution_x=resolution_x, resolution_y=resolution_y, IntBoundaries=IntBoundaries, VariogramModel=VariogramModel))\r\nexcept (ZeroDivisionError, ValueError, IndexError, AttributeError, NameError) as err:\r\n    debug.update({\"Error\":err})\r\ndebug.update({\"wfm_out\" : wfm_in +1,\r\n\"info\": \"This node interpolates the z values inbetween points given thier xyz position. A grind is layed in between. Integrated Interpolation Methods are linear, RBF, IDW, OrdiKriging, UnivKriging. As the more advanced ones are based on python libraries, please check them, if you need further tweaking.\",\r\n\"about options\" : \"Options are passed in as a design script dict. Please Check the python node, if you want to know, what can be passed (as resolution_x, rosolution_y, Int_Boundaries, kernel, VariogramModel)\"\r\n})\r\n\r\nif to_be_flattend==True:\r\n    out0 = out0[0]\r\n\r\n\r\nOUT = out0, debug, Points\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "b09d2ccdab0a46d7bbb2aa475021c0c3",
+      "Inputs": [
+        {
+          "Id": "29981d7017e0448ca4dc4d5bb93947c6",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "28384e6131ee4a95816e35de69e03be4",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "2caaecc47d094171bc646330b6f1e685",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f2f964df19114b9cb7c2e4d76d6db46c",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "69527b996c94451aa646b94fb13e3150",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "points",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "226ab28926054d6f872df412c46a41cc",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "79936d9296574ceb833903eba85c3061",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "InterpolationMethod",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": "\"linear\"",
+        "Description": ""
+      },
+      "Id": "603bafbf0779446d8be0b19942e8ba41",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2a3caab0d88840f7ae16915be200857e",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "resolution",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "5",
+        "Description": ""
+      },
+      "Id": "80caab12592e4f2183a3e91e344641e8",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "5f89e283c390456c8e5ec4459d699e2a",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "Interpolated",
+      "Id": "2d9ef199f7d943468716b739d703165b",
+      "Inputs": [
+        {
+          "Id": "33652bd4ca0f42e9b2daca37a2d7d5b7",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "a5d85e940f324059af29118b80487b03",
+      "Inputs": [
+        {
+          "Id": "de3faf883fb844b48a9ef1aff3058e8a",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "a[0];\na[1];",
+      "Id": "a6b225b6d329431ba895983d048d6ae1",
+      "Inputs": [
+        {
+          "Id": "d1c5466b70644158be97ac588c20e92e",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "49798eb4bf9b448ba613893d9bed6247",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a08c26360e9c4d21b20db608e009488e",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm_in\"], [0])",
+        "Description": ""
+      },
+      "Id": "ca19470db44744f49185c972efe398bd",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "bf5b9ff4a70f4e46b57da8da15a76b2c",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "69527b996c94451aa646b94fb13e3150",
+      "End": "d1c5466b70644158be97ac588c20e92e",
+      "Id": "52fd1e9a0cb0421490dd1e456afbdc5d"
+    },
+    {
+      "Start": "79936d9296574ceb833903eba85c3061",
+      "End": "29981d7017e0448ca4dc4d5bb93947c6",
+      "Id": "5b6e36a2968543b1bfc0a64526927bf1"
+    },
+    {
+      "Start": "2a3caab0d88840f7ae16915be200857e",
+      "End": "2caaecc47d094171bc646330b6f1e685",
+      "Id": "3e45b82eb25b45baa46d67b6a0b58be5"
+    },
+    {
+      "Start": "5f89e283c390456c8e5ec4459d699e2a",
+      "End": "f2f964df19114b9cb7c2e4d76d6db46c",
+      "Id": "963a0e13484149589802ad151523a6a4"
+    },
+    {
+      "Start": "49798eb4bf9b448ba613893d9bed6247",
+      "End": "33652bd4ca0f42e9b2daca37a2d7d5b7",
+      "Id": "048dbad9ddaa4026878dd440f0175a38"
+    },
+    {
+      "Start": "a08c26360e9c4d21b20db608e009488e",
+      "End": "de3faf883fb844b48a9ef1aff3058e8a",
+      "Id": "9d62dc6d637f409a869f98da97eb80b6"
+    },
+    {
+      "Start": "bf5b9ff4a70f4e46b57da8da15a76b2c",
+      "End": "28384e6131ee4a95816e35de69e03be4",
+      "Id": "2ce44971a0284c09914d445454b54a7f"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.10.1.3976",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -7.7679300308227539,
+      "EyeY": 25.031623840332031,
+      "EyeZ": 50.927566528320313,
+      "LookX": 2.7679300308227539,
+      "LookY": -14.031623840332031,
+      "LookZ": -58.927566528320313,
+      "UpX": 0.000818862346932292,
+      "UpY": 0.9998476505279541,
+      "UpZ": -0.017432697117328644
+    },
+    "NodeViews": [
+      {
+        "Id": "b09d2ccdab0a46d7bbb2aa475021c0c3",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Interpolation functions",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 469.67359050445111,
+        "Y": 150.05637982195844
+      },
+      {
+        "Id": "226ab28926054d6f872df412c46a41cc",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -176.54905226934,
+        "Y": 80.2612028451241
+      },
+      {
+        "Id": "603bafbf0779446d8be0b19942e8ba41",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -197.47525470714311,
+        "Y": 164.77270681907373
+      },
+      {
+        "Id": "80caab12592e4f2183a3e91e344641e8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -181.780602878791,
+        "Y": 278.86443336773993
+      },
+      {
+        "Id": "2d9ef199f7d943468716b739d703165b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 914.37062887589582,
+        "Y": 148.98276532076733
+      },
+      {
+        "Id": "a5d85e940f324059af29118b80487b03",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 962.81895259566284,
+        "Y": 279.59479073577944
+      },
+      {
+        "Id": "a6b225b6d329431ba895983d048d6ae1",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 714.20687166572134,
+        "Y": 197.85347746905785
+      },
+      {
+        "Id": "ca19470db44744f49185c972efe398bd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -272.06128686724526,
+        "Y": 432.11667473990076
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "b9b0aa9d3e6d4f618397bbb942fae1de",
+        "Title": "INPUT",
+        "Nodes": [
+          "226ab28926054d6f872df412c46a41cc",
+          "603bafbf0779446d8be0b19942e8ba41",
+          "80caab12592e4f2183a3e91e344641e8",
+          "ca19470db44744f49185c972efe398bd"
+        ],
+        "Left": -282.06128686724526,
+        "Top": 27.261202845124103,
+        "Width": 728.0,
+        "Height": 481.85547189477666,
+        "FontSize": 36.0,
+        "InitialTop": 80.2612028451241,
+        "InitialHeight": 496.85547189477666,
+        "TextblockHeight": 43.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "d5cdac9b0e9c4ff78e0c3b0cce2eea5a",
+        "Title": "OUTPUT",
+        "Nodes": [
+          "2d9ef199f7d943468716b739d703165b",
+          "a5d85e940f324059af29118b80487b03"
+        ],
+        "Left": 904.37062887589582,
+        "Top": 95.982765320767328,
+        "Width": 170.0,
+        "Height": 251.61202541501211,
+        "FontSize": 36.0,
+        "InitialTop": 148.98276532076733,
+        "InitialHeight": 275.61202541501211,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      },
+      {
+        "Id": "77a4c9f53d914c41a80fe1833c29f17c",
+        "Title": "Interpolate",
+        "Nodes": [
+          "b09d2ccdab0a46d7bbb2aa475021c0c3",
+          "a6b225b6d329431ba895983d048d6ae1"
+        ],
+        "Left": 459.67359050445111,
+        "Top": 97.056379821958444,
+        "Width": 375.53328116127022,
+        "Height": 235.0,
+        "FontSize": 36.0,
+        "InitialTop": 150.05637982195844,
+        "InitialHeight": 192.79709764709941,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": 390.43173256551643,
+    "Y": 182.87780164717248,
+    "Zoom": 0.75227829102354526
+  }
+}

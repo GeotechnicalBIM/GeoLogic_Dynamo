@@ -1,0 +1,385 @@
+{
+  "Uuid": "652a0345-839f-4ff0-9a24-93c4e7182b68",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Calculations",
+  "Description": "Calculates q_bk for bored piles in non-cohesive soils based on a given q_c",
+  "Name": "EA_Pfaehle_Tab_5_12",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\n\r\ndebug = {}\r\ninput0 = IN[0]\r\n\r\nif len(IN) > 1:\r\n    options = IN[1]\r\n\r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\nelse: to_be_flattend = False\r\n\r\ndef Tab_5_12(list):\r\n# Hier werden erst temporäre Listen (indiziert mit t am Ende) erstellt, und dann wird der maßgebende Wert aus diesen Listen extrahiert. Der maßgebende Wert ist erstmal der Wert der untersten Schicht, in den der Pfahl einbindet. Das ist mit den Indizes der untersten tragfähigen Schicht abzuglichen.\r\n# weitere Inputs für diese Funktion sind die Index Listen, die aber bei der vorgesehenen Verwendung global sind und daher nicht zwingend als Argument in die Funktion müssen\r\n\tq_bk_002t, q_bk_003t, q_bk_010t = [], [], []\r\n\tfor i in list:\r\n\t\tif i < 7.5:\r\n\t\t\tq_bk_002t.append(0)\r\n\t\t\tq_bk_003t.append(0)\r\n\t\t\tq_bk_010t.append(0)\r\n\t\telif i >= 7.5 and i < 15:\r\n\t\t\t# Lineares interpolieren der Zwischenschritte\r\n\t\t\ta = 550 + (1050-550)*((i-7.5)/(15-7.5))\r\n\t\t\tb = 700 + (1350-700)*((i-7.5)/(15-7.5))\r\n\t\t\tc = 1600 + (3000-1600)*((i-7.5)/(15-7.5))\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telif i >= 15 and i < 25:\r\n\t\t\ta = 1050 + (1750-1050)*((i-15)/(25-15)) \r\n\t\t\tb = 1350 + (2250-1350)*((i-15)/(25-15)) \r\n\t\t\tc = 3000 + (4000-3000)*((i-15)/(25-15)) \r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telif i >= 25:\r\n\t\t\ta = 1750\r\n\t\t\tb = 2250\r\n\t\t\tc = 4000\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telse:\r\n\t\t\ta = b = c = \"Unexpected Error\"\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\treturn [q_bk_002t, q_bk_003t, q_bk_010t]\r\n\r\n\r\nq_bk_out=Tab_5_12(input0)\r\n\r\nif to_be_flattend==True:\r\n    q_bk_out = q_bk_out[0]\r\n\r\ndebug.update({\"info\":\"Calculates q_bk (pile end bearing) based on a given q_c according to 'Tabelle 5.12 der Empfehlungen des Arbeitskreises Pfähle, EA-Pfähle 2016'. Results are retruned for s/Ds = 0.02, 0.03 and 0.10\", \"Anwendungsbereich\":\"bored piles in non-cohesive soils\"}) \r\n\r\nOUT = q_bk_out, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "6329455b3f134587be982d977841b5c9",
+      "Inputs": [
+        {
+          "Id": "2ff5e9c4204b4ba7a47ac7138f53e544",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f3910acaa827458eb0026a88bbb89063",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "1cc71de06ba3491190f5c6753cb44174",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "q_c",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "de17f3404e9540bf9f43974ad47e8faa",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "7f18eca83d534ede9caf29e492318bd3",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "q_bk",
+      "Id": "a5a6fcc8ce5f43c28a42635dd5f05663",
+      "Inputs": [
+        {
+          "Id": "b03ca74210894c5990684be479a00484",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "e4528ebb752c4b97964445afa8a58ba3",
+      "Inputs": [
+        {
+          "Id": "bcde2661e2a845f496c23e15e21bbfd5",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "a[0];\na[1];",
+      "Id": "f6e9a3188d8745fdbcf0775c3a32049e",
+      "Inputs": [
+        {
+          "Id": "7e83269ef9a349c0aaf1ba162513361d",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "f911e872be4048868c6783e053c1088d",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3819e344c8024375a37b6e6ec72be48b",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm\"], [0])",
+        "Description": ""
+      },
+      "Id": "a24286cb5335468daa7b0aa9adc12120",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fb58da3fd0ca43549db671fb3db1425c",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "1cc71de06ba3491190f5c6753cb44174",
+      "End": "7e83269ef9a349c0aaf1ba162513361d",
+      "Id": "3adecf5c621a4b39931220fbd8082707",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7f18eca83d534ede9caf29e492318bd3",
+      "End": "2ff5e9c4204b4ba7a47ac7138f53e544",
+      "Id": "5381438f87a847bdbe1bb475ef563466",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "f911e872be4048868c6783e053c1088d",
+      "End": "b03ca74210894c5990684be479a00484",
+      "Id": "45b7e317627f4d1c8eeda3b09baf6756",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3819e344c8024375a37b6e6ec72be48b",
+      "End": "bcde2661e2a845f496c23e15e21bbfd5",
+      "Id": "9289ceb4635640779b4a79c92fe3f392",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fb58da3fd0ca43549db671fb3db1425c",
+      "End": "f3910acaa827458eb0026a88bbb89063",
+      "Id": "a3cc9d0a8ec3420aa24696dc2360d6b7",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "EA_Pfaehle_Tab_5_12",
+        "ShowGeometry": true,
+        "Id": "6329455b3f134587be982d977841b5c9",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 296.2863992390885,
+        "Y": -11.571599809772238
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "de17f3404e9540bf9f43974ad47e8faa",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -14.319654427645787,
+        "Y": -17.775377969762417
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "a5a6fcc8ce5f43c28a42635dd5f05663",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 812.69794831172885,
+        "Y": -36.607699381759744
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "e4528ebb752c4b97964445afa8a58ba3",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 812.69794831172885,
+        "Y": 109.17929919153198
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "f6e9a3188d8745fdbcf0775c3a32049e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 554.00119866840487,
+        "Y": -6.2322498811076912
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "a24286cb5335468daa7b0aa9adc12120",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -522.14966233479367,
+        "Y": 111.90801874293993
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "e1891c42f803451798dde95d9d470091",
+        "Title": "INPUT",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "de17f3404e9540bf9f43974ad47e8faa",
+          "a24286cb5335468daa7b0aa9adc12120"
+        ],
+        "HasNestedGroups": false,
+        "Left": -532.14966233479367,
+        "Top": -90.775377969762417,
+        "Width": 762.0,
+        "Height": 344.68339671270235,
+        "FontSize": 36.0,
+        "InitialTop": -17.775377969762417,
+        "InitialHeight": 214.77105831533481,
+        "TextblockHeight": 63.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "e7d4d4b6ac3e47bba227b40ad5fe048b",
+        "Title": "OUTPUT",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "a5a6fcc8ce5f43c28a42635dd5f05663",
+          "e4528ebb752c4b97964445afa8a58ba3"
+        ],
+        "HasNestedGroups": false,
+        "Left": 802.69794831172885,
+        "Top": -109.60769938175974,
+        "Width": 154.49,
+        "Height": 350.78699857329173,
+        "FontSize": 36.0,
+        "InitialTop": -36.607699381759744,
+        "InitialHeight": 204.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFF7BAC"
+      },
+      {
+        "Id": "258eeac5030d4915b7069b61a916ced6",
+        "Title": "get q_bk",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "6329455b3f134587be982d977841b5c9",
+          "f6e9a3188d8745fdbcf0775c3a32049e"
+        ],
+        "HasNestedGroups": false,
+        "Left": 286.2863992390885,
+        "Top": -84.571599809772238,
+        "Width": 431.71479942931637,
+        "Height": 235.0,
+        "FontSize": 36.0,
+        "InitialTop": -11.571599809772238,
+        "InitialHeight": 146.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": 658.66512907080187,
+    "Y": 324.12831791772408,
+    "Zoom": 0.69134779386718748
+  }
+}

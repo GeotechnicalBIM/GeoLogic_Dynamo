@@ -1,0 +1,385 @@
+{
+  "Uuid": "00a8f168-90e9-43dc-b169-4ab3e78ecac9",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Calculations",
+  "Description": "Calculates the q_bk for a bored pile in cohesive soils given its c_uk",
+  "Name": "EA_Pfaehle_Tab_5_14",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "c_uk",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "b133f06f920c48a3bce63e39bae26830",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "68f85caeac50465e96a0db24e7fa8a10",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\ndebug = {}\r\ninput0 = IN[0]\r\n\r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\nelse: to_be_flattend = False\r\n\r\n# based on implementation of Tab 5_12\r\ndef Tab_5_14(list):\r\n\tq_bk_002t, q_bk_003t, q_bk_010t = [], [], []\r\n\tfor i in list:\r\n\t\tif i < 100:\r\n\t\t\tq_bk_002t.append(0)\r\n\t\t\tq_bk_003t.append(0)\r\n\t\t\tq_bk_010t.append(0)\r\n\t\telif i >= 100 and i < 150:\r\n\t\t\t# Lineares interpolieren der Zwischenschritte\r\n\t\t\ta = 350 + (600-350)*((i-100)/(150-100))\r\n\t\t\tb = 450 + (700-450)*((i-100)/(150-100))\r\n\t\t\tc = 800 + (1200-800)*((i-100)/(150-100))\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telif i >= 150 and i < 250:\r\n\t\t\ta = 600 + (950-600)*((i-150)/(250-150)) \r\n\t\t\tb = 700 + (1200-700)*((i-150)/(250-150)) \r\n\t\t\tc = 1200 + (1600-1200)*((i-150)/(250-150)) \r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telif i >= 250:\r\n\t\t\ta = 950\r\n\t\t\tb = 1200\r\n\t\t\tc = 1600\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\t\telse:\r\n\t\t\ta = b = c = \"Unexpected Error\"\r\n\t\t\tq_bk_002t.append(a)\r\n\t\t\tq_bk_003t.append(b)\r\n\t\t\tq_bk_010t.append(c)\r\n\treturn [q_bk_002t, q_bk_003t, q_bk_010t]\r\n\r\nq_bk_out=Tab_5_14(input0)\r\n\r\nif to_be_flattend==True:\r\n    q_bk_out = q_bk_out[0]\r\n\r\ndebug.update({\"info\":\"Calculates q_bk (pile end bearing) based on a given c_uk according to 'Tabelle 5.14 der Empfehlungen des Arbeitskreises Pfähle, EA-Pfähle 2016'. Results are retruned for s/Ds = 0.02, 0.03 and 0.10\", \"Anwendungsbereich\":\"bored piles in cohesive soils\"}) \r\n\r\n\r\nOUT = q_bk_out, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "902e4d167bc3415fa97ac9d259605121",
+      "Inputs": [
+        {
+          "Id": "8de34ff262cb4bd7a4102119b486c74b",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "da978f921a9f41dc8d0f3029d8915b9e",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6636201962c0477b9ddf338ceb1262e7",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "b=a[0];\nc= a[1];",
+      "Id": "4d480a8590ce48ceba099a3c9f3e5a6b",
+      "Inputs": [
+        {
+          "Id": "fbcfd204400043ebac35ae4da2e632bd",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fbe3b04529354caba00dcd0d667852de",
+          "Name": "",
+          "Description": "b",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "027e3d1e5b734fbcb25b05983a373058",
+          "Name": "",
+          "Description": "c",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "q_bk",
+      "Id": "d7f74d4d7dcc4922aa3dc9053a58921f",
+      "Inputs": [
+        {
+          "Id": "d1014ab982234a74aa01a40a72ad8aee",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "8d699983aa1e45a98ec3d8b0479c6964",
+      "Inputs": [
+        {
+          "Id": "0cd27b1bfe81434384856ffeee8ee0ba",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm\"], [0])",
+        "Description": ""
+      },
+      "Id": "2082a8be9f714b58a836cf735e6ed858",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "72b1596c63b144f29eb7d4aa3a429fd4",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "68f85caeac50465e96a0db24e7fa8a10",
+      "End": "8de34ff262cb4bd7a4102119b486c74b",
+      "Id": "1a7fe6a51bf1401d8372dfae82066aa2",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "6636201962c0477b9ddf338ceb1262e7",
+      "End": "fbcfd204400043ebac35ae4da2e632bd",
+      "Id": "68f59d810a3447f5a590f145cda0a131",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fbe3b04529354caba00dcd0d667852de",
+      "End": "d1014ab982234a74aa01a40a72ad8aee",
+      "Id": "e0e73d1138744805a1c150ba963db690",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "027e3d1e5b734fbcb25b05983a373058",
+      "End": "0cd27b1bfe81434384856ffeee8ee0ba",
+      "Id": "4ac7d6eb12244958a0e5c08696b8e451",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "72b1596c63b144f29eb7d4aa3a429fd4",
+      "End": "da978f921a9f41dc8d0f3029d8915b9e",
+      "Id": "5d258b2018dd41dab66f4f6895433230",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "b133f06f920c48a3bce63e39bae26830",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 389.0,
+        "Y": 230.0
+      },
+      {
+        "Name": "EA_Pfaehle_Tab_5_14",
+        "ShowGeometry": true,
+        "Id": "902e4d167bc3415fa97ac9d259605121",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 707.43961011970089,
+        "Y": 250.90118019587419
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "4d480a8590ce48ceba099a3c9f3e5a6b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 958.43961011970089,
+        "Y": 251.90118019587419
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "d7f74d4d7dcc4922aa3dc9053a58921f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1148.4396101197008,
+        "Y": 204.90118019587419
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "8d699983aa1e45a98ec3d8b0479c6964",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1148.4396101197008,
+        "Y": 335.90118019587419
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "2082a8be9f714b58a836cf735e6ed858",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -90.999999999999886,
+        "Y": 364.0
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "fda86ba641cb48e7a29e5584eb4dc544",
+        "Title": "INPUTS",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "b133f06f920c48a3bce63e39bae26830",
+          "2082a8be9f714b58a836cf735e6ed858"
+        ],
+        "HasNestedGroups": false,
+        "Left": -100.99999999999989,
+        "Top": 157.0,
+        "Width": 762.0,
+        "Height": 349.0,
+        "FontSize": 36.0,
+        "InitialTop": 230.0,
+        "InitialHeight": 229.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "5da06c79eb4d459a9b883e131a737a2b",
+        "Title": "get q_bk",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "902e4d167bc3415fa97ac9d259605121",
+          "4d480a8590ce48ceba099a3c9f3e5a6b"
+        ],
+        "HasNestedGroups": false,
+        "Left": 697.43961011970089,
+        "Top": 177.90118019587419,
+        "Width": 440.99999999999989,
+        "Height": 235.0,
+        "FontSize": 36.0,
+        "InitialTop": 250.90118019587419,
+        "InitialHeight": 147.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "42ecda9cfbb44869b977131f7d1b3122",
+        "Title": "OUTPUT",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "d7f74d4d7dcc4922aa3dc9053a58921f",
+          "8d699983aa1e45a98ec3d8b0479c6964"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1138.4396101197008,
+        "Top": 131.90118019587419,
+        "Width": 154.49,
+        "Height": 336.0,
+        "FontSize": 36.0,
+        "InitialTop": 204.90118019587419,
+        "InitialHeight": 204.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": 64.0,
+    "Y": 197.0,
+    "Zoom": 1.0
+  }
+}

@@ -1,0 +1,685 @@
+{
+  "Uuid": "fbac07c0-cd1d-4152-a9e9-66d2e60f20a2",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Calculations",
+  "Description": "Calculates the earth pressure coefficients. See info (debug dict) for help.",
+  "Name": "Earth_Pressure_Coefficient",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "List": {
+        "Key": "List",
+        "Value": "BuiltIn.ds"
+      },
+      "Autodesk.DesignScript.Geometry.Point": {
+        "Key": "Autodesk.DesignScript.Geometry.Point",
+        "Value": "ProtoGeometry.dll"
+      },
+      "Vector": {
+        "Key": "Autodesk.DesignScript.Geometry.Vector",
+        "Value": "ProtoGeometry.dll"
+      },
+      "Revit.Elements.Category": {
+        "Key": "Revit.Elements.Category",
+        "Value": "RevitNodes.dll"
+      },
+      "DirectShape": {
+        "Key": "Revit.Elements.DirectShape",
+        "Value": "RevitNodes.dll"
+      },
+      "Revit.Material": {
+        "Key": "Revit.Elements.Material",
+        "Value": "RevitNodes.dll"
+      },
+      "Revit.Elements.Material": {
+        "Key": "Revit.Elements.Material",
+        "Value": "RevitNodes.dll"
+      },
+      "Autodesk.DesignScript.Geometry.Vector": {
+        "Key": "Autodesk.DesignScript.Geometry.Vector",
+        "Value": "ProtoGeometry.dll"
+      },
+      "Color": {
+        "Key": "DSCore.Color",
+        "Value": "DSCoreNodes.dll"
+      },
+      "Cuboid": {
+        "Key": "Autodesk.DesignScript.Geometry.Cuboid",
+        "Value": "ProtoGeometry.dll"
+      },
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "debug=a[0];\npython_out=a[1];",
+      "Id": "3345308415894c32a868a82c02f3bcb8",
+      "Inputs": [
+        {
+          "Id": "1cdcac8d71c2414d9fbae9c53ddf7347",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "bce6ea53c27b47d38e7b3718d319c829",
+          "Name": "",
+          "Description": "debug",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "348982f841054352bdc85ed91869e9dd",
+          "Name": "",
+          "Description": "python_out",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "earth_pressure_coefficient",
+      "Id": "35edadab94844768b20eae544871c180",
+      "Inputs": [
+        {
+          "Id": "67583e682d2941c1a3574b28b553c266",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug;",
+      "Id": "aa044e1e02b44487b9656976b2a6c073",
+      "Inputs": [
+        {
+          "Id": "f4b9604971f249c1a014e2a06611d8c8",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "delta_a",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "2 / 3",
+        "Description": ""
+      },
+      "Id": "7b556494c4584b79972ec34498387f5e",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "e8f312eaed4443819a8ac4bd23911cda",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "delta_p",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "0",
+        "Description": ""
+      },
+      "Id": "30b85d86e8d54a03a7b1f560b4c25721",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "5010f6e9705c4d6ca4116dad68ed6590",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "c",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "0",
+        "Description": ""
+      },
+      "Id": "081cd6307534443fbfc836ff55d25081",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "fc5a3232ebff48879ff6b7f9d3e9f8de",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "phi",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "30",
+        "Description": ""
+      },
+      "Id": "84ce31f59d604786bd0ad78b8c1c6bc4",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "7ac21b43519745858b4d071c3307fb4c",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "beta",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "0",
+        "Description": ""
+      },
+      "Id": "afa09667df1c4a7d8b7c489236deabde",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "77fbf26addd442fcaeea419e42a73a01",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "alpha",
+        "TypeName": "double",
+        "TypeRank": 0,
+        "DefaultValue": "0",
+        "Description": ""
+      },
+      "Id": "be11d9033f0b41fa92cfd2e98e7ca353",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "d1a2d4782dba4092b30c6608ea5cf648",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm\"], [0])",
+        "Description": ""
+      },
+      "Id": "73a05225524146eab8b99fc2617495ec",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "41870a4d62214dbeb53c0d1f96feee33",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "\r\n# Die Eingaben für diesen Block werden in Form einer Liste in den IN-Variablen gespeichert.\r\nalpha = IN[0]\r\nbeta = IN[1]\r\nphi = IN[2]\r\ndelta_a = phi*IN[3]\r\ndelta_p = phi* IN[4]\r\nc = IN[5]\r\noptions = IN[6]\r\n\r\ndebug = {}\r\n\r\n# if not specified, what the user wants to see, show everything\r\n#if not bool(options):\r\n#    options=['K_agh', 'theta_a', 'K_aph', 'K_ach', 'K_pgh_Katzenbach', 'K_pgh', 'K_pph', 'K_pch', 'theta_p']\r\n\r\nif \"coeffs\" not in options.keys():\r\n    options.update({\"coeffs\":['K_agh', 'theta_a', 'K_aph', 'K_ach', 'K_pgh_Katzenbach', 'K_pgh', 'K_pph', 'K_pch', 'theta_p']})\r\n\r\n# Code unterhalb dieser Linie platzieren\r\nimport math\r\n\r\ndef K_agh (alpha, beta, delta_a, phi):\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_a = math.radians(delta_a); phi = math.radians(phi)\r\n    K_agh = (math.cos(phi - alpha)**2) / (math.cos(alpha)**2*(1+((math.sin(phi + delta_a)*math.sin(phi - beta))/(math.cos(alpha + delta_a) * math.cos(alpha - beta)))**0.5)**2)\r\n    return K_agh\r\n\r\ndef theta_a (alpha, beta, delta_a, phi):\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_a = math.radians(delta_a); phi = math.radians(phi)\r\n    theta_a = phi + math.atan(math.cos(phi-alpha)/(math.sin(phi-alpha)+((math.sin(phi + delta_a)*math.cos(alpha - beta))/(math.sin(phi - beta)*math.cos(delta_a + alpha)))**0.5))\r\n    return math.degrees(theta_a)\r\n\r\ndef K_aph (alpha, beta, delta_a, phi):\r\n    a = K_agh(alpha, beta, delta_a, phi)\r\n    alpha = math.radians(alpha); beta = math.radians(beta)\r\n    K_aph = a * ((math.cos(alpha)*math.cos(beta))/(math.cos(alpha-beta)))\r\n    return K_aph\r\n\r\ndef K_ach  (alpha, beta, delta_a, phi):\r\n    a = K_agh(alpha, beta, delta_a, phi)\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta = math.radians(delta_a); phi = math.radians(phi)\r\n    K_ach = a**0.5 * math.cos(delta_a) * (2)\r\n    K_ach_var = (2 * math.cos(alpha-beta)*math.cos(phi)*math.cos(alpha+delta))/(math.cos(alpha)*(1+math.sin(phi+alpha+delta-beta)))\r\n    return K_ach_var\r\n\r\ndef K_pgh_Katzenbach (alpha, beta, delta_p, phi):\r\n    # Nach Katzebbach\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_p = math.radians(delta_p); phi = math.radians(phi)\r\n    K_pgh = (math.cos(phi + alpha) ** 2) / (math.cos(alpha) ** 2 * (1 - ((math.sin(phi - delta_p) * math.sin(phi + beta))\\\r\n    / (math.cos(alpha + delta_p) * math.cos(alpha - beta))) ** 0.5) ** 2)\r\n    return (K_pgh)\r\n\r\ndef K_pgh(alpha, beta, delta_p, phi):\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_p = math.radians(delta_p); phi = math.radians(phi)\r\n    # nach Pregl, siehe z.B. https://link.springer.com/content/pdf/10.1007%2F978-3-658-14931-4_16.pdf\r\n    if phi > 0:\r\n        if delta_p <= 0:\r\n            i_pg = (1-0.53*delta_p)**(0.26+5.96*phi)\r\n        else:\r\n            i_pg = (1+0.41*delta_p)**(-7.13)\r\n        if beta <= 0:\r\n            g_pg = (1+0.73*beta)**2.89\r\n        else:\r\n            g_pg = (1+0.35*beta)**(0.42+8.15*phi)\r\n        if alpha <= 0:\r\n            t_pg = (1+0.72*alpha*math.tan(phi))**(-3.51+1.03*phi)\r\n        else:\r\n            t_pg = (1-0.0012*alpha*math.tan(phi))**(2910-1958*phi)\r\n        K_pg0 = (1+math.sin(phi))/(1-math.sin(phi))\r\n        K_pg = K_pg0 * i_pg * g_pg * t_pg\r\n    elif phi == 0:\r\n        K_pg = K_pp = 1\r\n        K_pc = (2*(1+beta)*(1-alpha))/math.cos(alpha)\r\n    K_pgh = K_pg * math.cos(delta_p+alpha)\r\n    return K_pgh\r\n\r\ndef K_pph(alpha, beta, delta_p, phi):\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_p = math.radians(delta_p); phi = math.radians(phi)\r\n    # nach Pregl\r\n    if phi > 0:\r\n        if delta_p <= 0:\r\n            i_pp = (1-1.33*delta_p)**(0.08+2.37*phi)\r\n        else:\r\n            i_pp = (1-0.72*delta_p)**2.81\r\n        if beta <= 0:\r\n            g_pp = (1+1.16*beta)**1.57\r\n        else:\r\n            g_pp = (1+3.84*beta)**(0.98*phi)\r\n        if alpha <= 0:\r\n            t_pp = (math.exp(-2*alpha*math.tan(phi)))/math.cos(alpha)\r\n        else:\r\n            t_pp = (math.exp(-2*alpha*math.tan(phi)))/math.cos(alpha)\r\n        K_pp0 = (1+math.sin(phi))/(1-math.sin(phi))\r\n        K_pp = K_pp0 * i_pp * g_pp * t_pp\r\n    elif phi == 0:\r\n        K_pp = 1\r\n    K_pph = K_pp * math.cos(delta_p+alpha)\r\n    return K_pph\r\n\r\ndef K_pch(alpha, beta, delta_p, phi):\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_p = math.radians(delta_p); phi = math.radians(phi)\r\n    # nach Pregl\r\n    if phi > 0:\r\n        if delta_p <= 0:\r\n            i_pc = (1-1.33*delta_p)**(0.08+2.37*phi)\r\n        else:\r\n            i_pc = (1+4.46*delta_p*math.tan(phi))**(-1.14+0.57*phi)\r\n        if beta <= 0:\r\n            g_pc = (1 + 0.001 * beta * math.tan(phi))**(205.4 + 2332 * phi)\r\n        else:\r\n            g_pc = math.exp(2*beta*math.tan(phi))\r\n        if alpha <= 0:\r\n            t_pc = (math.exp(-2*alpha*math.tan(phi)))/math.cos(alpha)\r\n        else:\r\n            t_pc = t_pp = (math.exp(-2*alpha*math.tan(phi)))/math.cos(alpha)\r\n        K_pp0 = (1 + math.sin(phi)) / (1 - math.sin(phi))\r\n        K_pc0 = (K_pp0-1)*(math.tan(phi)**(-1))\r\n        K_pc = K_pc0 * i_pc * g_pc * t_pc\r\n    elif phi == 0:\r\n        K_pc = (2*(1+beta)*(1-alpha))/math.cos(alpha)\r\n    K_pch = K_pc * math.cos(delta_p+alpha)\r\n    return K_pch\r\n\r\ndef theta_p (alpha, beta, delta_p, phi):\r\n    # nach Müller Breslau\r\n    alpha = math.radians(alpha); beta = math.radians(beta); delta_p = math.radians(delta_p); phi = math.radians(phi)\r\n    theta_p = (-1)*(phi) + math.atan(((-1)*math.tan(alpha + phi)+math.cos(alpha+phi)**(-1)\\\r\n                                      *((math.sin(delta_p-phi)*math.cos(alpha-beta))\\\r\n                                        /((-1)*math.sin(phi+beta)*math.cos(delta_p+alpha)))**0.5)**(-1))\r\n    theta_p = math.degrees(theta_p)\r\n    return theta_p\r\n\r\n# Input in Grad\r\n#alpha = 0\r\n#beta = 0\r\n#phi = 30\r\n#delta_a = (2/3)*phi\r\n#delta_p = 0*(-2/3)*phi\r\n#c = 0\r\n\r\n\r\nout1= {}\r\nfor coeff in options[\"coeffs\"]:\r\n    if coeff == 'K_agh':\r\n        coeff1=K_agh(alpha, beta, delta_a, phi)\r\n    elif coeff == 'theta_a':\r\n        coeff1=theta_a(alpha, beta, delta_a, phi)\r\n    elif coeff =='K_aph':\r\n        coeff1=K_aph(alpha, beta, delta_a, phi)\r\n    elif coeff =='K_ach':\r\n        coeff1=K_ach(alpha, beta, delta_a, phi)\r\n    elif coeff =='K_pgh_Katzenbach':\r\n        coeff1=K_pgh_Katzenbach(alpha, beta, delta_p, phi)\r\n    elif coeff =='K_pgh':\r\n        coeff1=K_pgh(alpha, beta, delta_p, phi)\r\n    elif coeff == 'K_pph':\r\n        coeff1=K_pph(alpha, beta, delta_p, phi)\r\n    elif coeff =='K_pch':\r\n        coeff1=K_pch(alpha, beta, delta_p, phi)\r\n    elif coeff =='theta_p':\r\n        coeff1=theta_p (alpha, beta, delta_p, phi)\r\n    else:\r\n        coeff1=\"!!! Please check options. Invalid Input. See info for more information\"\r\n    \r\n    out1.update({coeff : coeff1})\r\n    \r\n\r\n\r\n\r\ndebug.update({\"info\" : \"This node calculates earth pressure coefficients based on given numerical values for alpha, beta (geometry), phi, c (soil), delta_a, delta_p (soil_structure_interaction). The deltas are given in parts of phi, e.g. 0.5 or 2/3 would be a valid input. Alpha and beta expect degree values. Options determin, what shall be returned. They are passed as a list of strings. Max. possible is ['K_agh', 'theta_a', 'K_aph', 'K_ach', 'K_pgh_Katzenbach', 'K_pgh', 'K_pph', 'K_pch', 'theta_p']\"})\r\n#print(K_aph(alpha, beta, delta_a, phi))\r\n#print(theta_a(alpha, beta, delta_a, phi))\r\n#print(K_agh(alpha, beta, delta_a, phi))\r\n#print(K_ach(alpha, beta, delta_a, phi))\r\n#print(\"Kpgh nach Katzenbach _ gerade Gleitfäche = \" + str(K_pgh_Katzenbach(alpha, beta, delta_p, phi,)))\r\n#print(theta_p(alpha, beta, delta_p, phi))\r\n#print(K_pch(alpha, beta, delta_p, phi))\r\n#print(K_agh(15, 0, delta_a, 30))\r\n# Weisen Sie Ihre Ausgabe der OUT-Variablen zu.\r\nOUT = debug, out1\r\n\r\n\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "98ff01f4e8174ea3b66752ac39d9b430",
+      "Inputs": [
+        {
+          "Id": "1c6bfe9097f5450b916a96f23da97005",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "cedfaffa9e904a1cb814d25154abc68c",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "e784af6701f744af81db5233933cff6b",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "1010906d04884f718e5d2621c95bd9e5",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "6340cd941acb43abb4ff92730caf0a9a",
+          "Name": "IN[4]",
+          "Description": "Input #4",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "662987d4b8cc4dd7ba4b7869ada66bb8",
+          "Name": "IN[5]",
+          "Description": "Input #5",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "18b62d2e725e43a682af9d5daa25f3ce",
+          "Name": "IN[6]",
+          "Description": "Input #6",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "21f95e72a1c94c8887cded48587f6639",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "bce6ea53c27b47d38e7b3718d319c829",
+      "End": "f4b9604971f249c1a014e2a06611d8c8",
+      "Id": "62c0a33c8f3f4db693fa92a24cfd491c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "348982f841054352bdc85ed91869e9dd",
+      "End": "67583e682d2941c1a3574b28b553c266",
+      "Id": "06eff177e4b042eb929126ae97104809",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e8f312eaed4443819a8ac4bd23911cda",
+      "End": "1010906d04884f718e5d2621c95bd9e5",
+      "Id": "a0b2aee20cb64626958d061982db60ae",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5010f6e9705c4d6ca4116dad68ed6590",
+      "End": "6340cd941acb43abb4ff92730caf0a9a",
+      "Id": "2df75e94f0ba45929fdcd5d54062a502",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fc5a3232ebff48879ff6b7f9d3e9f8de",
+      "End": "662987d4b8cc4dd7ba4b7869ada66bb8",
+      "Id": "80e3d4666a2f4be2a7cc9389c6c8b5f7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "7ac21b43519745858b4d071c3307fb4c",
+      "End": "e784af6701f744af81db5233933cff6b",
+      "Id": "3a0aea157e664d2981ab2932a69ff56a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "77fbf26addd442fcaeea419e42a73a01",
+      "End": "cedfaffa9e904a1cb814d25154abc68c",
+      "Id": "a6a4031165a14788bc05b31775acde91",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d1a2d4782dba4092b30c6608ea5cf648",
+      "End": "1c6bfe9097f5450b916a96f23da97005",
+      "Id": "b4e7f5d45c2448929072af8390fb96d5",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "41870a4d62214dbeb53c0d1f96feee33",
+      "End": "18b62d2e725e43a682af9d5daa25f3ce",
+      "Id": "8b7305a4431145e4818bdd54ba642b57",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "21f95e72a1c94c8887cded48587f6639",
+      "End": "1cdcac8d71c2414d9fbae9c53ddf7347",
+      "Id": "7e2113ac4c8044f69fc04c3bd81ccca3",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "3345308415894c32a868a82c02f3bcb8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1702.8374002623457,
+        "Y": 609.6664994104
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "35edadab94844768b20eae544871c180",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2038.509823035688,
+        "Y": 613.41028425046727
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "aa044e1e02b44487b9656976b2a6c073",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 2046.0860247560249,
+        "Y": 741.58755880924934
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "7b556494c4584b79972ec34498387f5e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 838.80643341887958,
+        "Y": 990.99706789505831
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "30b85d86e8d54a03a7b1f560b4c25721",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 842.9975129867496,
+        "Y": 1113.0540772084064
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "081cd6307534443fbfc836ff55d25081",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 847.81162012403956,
+        "Y": 1240.1635777275073
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "84ce31f59d604786bd0ad78b8c1c6bc4",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 835.91568249532975,
+        "Y": 853.02567244253225
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "afa09667df1c4a7d8b7c489236deabde",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 836.8224416680996,
+        "Y": 726.0371359720333
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "be11d9033f0b41fa92cfd2e98e7ca353",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 835.43644851413978,
+        "Y": 612.60361987738634
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "73a05225524146eab8b99fc2617495ec",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 532.25273353920647,
+        "Y": 1398.5562001429246
+      },
+      {
+        "Name": "Erddruck",
+        "ShowGeometry": false,
+        "Id": "98ff01f4e8174ea3b66752ac39d9b430",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1500.7308986698179,
+        "Y": 606.26068864877732
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "282d2d33d12d4c76bec6a484f03831f0",
+        "Title": "Calculate",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "3345308415894c32a868a82c02f3bcb8",
+          "98ff01f4e8174ea3b66752ac39d9b430"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1490.7308986698179,
+        "Top": 533.26068864877732,
+        "Width": 455.10650159252782,
+        "Height": 422.0,
+        "FontSize": 36.0,
+        "InitialTop": 606.26068864877732,
+        "InitialHeight": 165.78946131701662,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "da8a1615f59d4384ac1be3439198897c",
+        "Title": "OUTPUTS",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "35edadab94844768b20eae544871c180",
+          "aa044e1e02b44487b9656976b2a6c073"
+        ],
+        "HasNestedGroups": false,
+        "Left": 2028.509823035688,
+        "Top": 540.41028425046727,
+        "Width": 310.0,
+        "Height": 333.17727455878207,
+        "FontSize": 36.0,
+        "InitialTop": 613.41028425046727,
+        "InitialHeight": 242.84690055215992,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFF7BAC"
+      },
+      {
+        "Id": "4108ee6a2ff840e89db92534acbe19d2",
+        "Title": "INPUTS",
+        "DescriptionText": "",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "be11d9033f0b41fa92cfd2e98e7ca353",
+          "afa09667df1c4a7d8b7c489236deabde",
+          "84ce31f59d604786bd0ad78b8c1c6bc4",
+          "081cd6307534443fbfc836ff55d25081",
+          "30b85d86e8d54a03a7b1f560b4c25721",
+          "7b556494c4584b79972ec34498387f5e",
+          "73a05225524146eab8b99fc2617495ec"
+        ],
+        "HasNestedGroups": false,
+        "Left": 522.25273353920647,
+        "Top": 539.60361987738634,
+        "Width": 762.0,
+        "Height": 1000.9525802655382,
+        "FontSize": 36.0,
+        "InitialTop": 612.60361987738634,
+        "InitialHeight": 562.520901876739,
+        "TextblockHeight": 63.0,
+        "Background": "#FF848484"
+      }
+    ],
+    "X": 205.98515575912234,
+    "Y": 31.247043410925414,
+    "Zoom": 0.4460187158387221
+  }
+}

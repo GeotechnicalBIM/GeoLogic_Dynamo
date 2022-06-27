@@ -1,0 +1,445 @@
+{
+  "Uuid": "887f351e-3c17-4009-b903-0f63c23f98a6",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Geometry",
+  "Description": "Converts a list of Dynamo Points to a target type (such as list, tuple, xyz)",
+  "Name": "Convert_Dynamo_Point",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "Autodesk.DesignScript.Geometry.Point": {
+        "Key": "Autodesk.DesignScript.Geometry.Point",
+        "Value": "ProtoGeometry.dll"
+      },
+      "DesignScript.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      },
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\n\r\ndebug = {}\r\nimport sys\r\nimport clr\r\n\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\nfrom Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\n\r\n# Color Nodes from Dynamo\r\nclr.AddReference('DSCoreNodes')\r\nimport DSCore\r\nfrom DSCore import Color\r\n\r\n# Import GeometryColor _ Display in Dynamo\r\nclr.AddReference('GeometryColor')\r\nfrom Modifiers import GeometryColor\r\n\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\nimport System\r\n\r\n# Import DocumentManager and Transaction Manger\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\n# Revit API\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\n# Revit API Usier Ingerfavce\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\n\r\n# Assign Inputs IN of the python node\r\ninput0 = IN[0]\r\nToBeReturned = IN[2]\r\n\r\n# Allows nested lists / dicts / tuples in the input 0. Two dimensonal only. \r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\n    out0 = [[]]\r\nelse: \r\n    to_be_flattend = False\r\n    out0 = []\r\n\r\n\r\ndef point_convert(points, ToBeReturned=\"tuple\"):\r\n    if isinstance(points[0], DynamoPoint):\r\n        converted = points if ToBeReturned in [\"DynamoPoints\"] else []\r\n        if ToBeReturned in [\"list\", \"List\"]:\r\n            for point in points:\r\n                converted.append([point.X, point.Y, point.Z])\r\n        elif ToBeReturned in [\"dict\", \"Dictionary\", \"Dict\"]:\r\n            converted = {}\r\n            for point in points:\r\n                converted.update({\"x\": point.X, \"y\": point.Y, \"z\": point.Z})\r\n        elif ToBeReturned in [\"tuple\", \"Tuple\"]:\r\n            for point in points:\r\n                converted.append((point.X, point.Y, point.Z))                    \r\n        elif ToBeReturned in [\"xyz\", \"XYZ\", \"RevitPoint\", \"Revit\"]:\r\n            for point in points:\r\n                converted.append(XYZ(point.X, point.Y, point.Z))\r\n        \r\n        return converted\r\n    \r\n    elif isinstance(points, list) or isinstance(points, tuple) :\r\n        converted = points if ToBeReturned in [\"list\", \"List\"] else []\r\n        converted.append(\"Requested output type not implemented yet\")\r\n    #    return converted\r\n    \r\n    #elif isinstance(points, dict):\r\n    #    converted=[\"hi\"]\r\n    #    for point in points:\r\n    #        converted.append(type(points[0]))\r\n    #    return converted\r\n        \r\n    else:\r\n        return \"Input is not a Dynamo Point list. Type is {}\".format(type(points))    \r\n        \r\ntry:\r\n    # your code here\r\n    if isinstance(input0[0], DynamoPoint): \r\n        out0.append(point_convert(input0, ToBeReturned=ToBeReturned))\r\n    else:\r\n        for point_list in input0:\r\n            out0.append(point_convert(point_list, ToBeReturned=ToBeReturned))\r\n\r\n\r\nexcept (ZeroDivisionError, ValueError, IndexError, AttributeError, NameError) as err:\r\n    debug.update({\"Error\":err})\r\n\r\n\r\nif to_be_flattend==True:\r\n    out0 = out0[0]\r\n\r\n\r\nOUT = out0, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "fdddbbc1ad814dcfb4101cba3f746145",
+      "Inputs": [
+        {
+          "Id": "cf80234ab5d6418c808e8536c8335e25",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "da2e001b8c874386b7ba6b6a80127c09",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "03d03191bc7a41b7befcc7847dd38632",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "95300b59acdd4544ab6612925b4a413d",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "PointsToConvert",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "1c2adb935ea7402db3fbe0af82b1f5fb",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "462026bf230949f48f2976dcb152f4da",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "ToBeReturned",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": "\"list\"",
+        "Description": ""
+      },
+      "Id": "3b68499229474b51adc1787646eda56c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "824fcc0fb8224d028a1fa699e247bc32",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm\"], [0])",
+        "Description": ""
+      },
+      "Id": "89619ca39acc454485940fd1954f0395",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "87da68aec80344f7a2ae400353e02f4b",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "points=lst[0];\ndebug=lst[1];",
+      "Id": "de5580e9ae9d40789b3ebee60b537f19",
+      "Inputs": [
+        {
+          "Id": "d9d70fd7848c4c69936a429cd7cde49d",
+          "Name": "lst",
+          "Description": "lst",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e78ff0c9ee874d7392f6ba3812b8f6df",
+          "Name": "",
+          "Description": "points",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "269d78a3888145838561c20b664015ba",
+          "Name": "",
+          "Description": "debug",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "Converted",
+      "Id": "4dbef80e0f5145c8ae6634a33f919811",
+      "Inputs": [
+        {
+          "Id": "8371f7468d494e1895570e1ea5728c67",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "df0c9d7045084958905023d903dcb3e2",
+      "Inputs": [
+        {
+          "Id": "f4c4b3b9a1d0488c8c51af045da45e84",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "95300b59acdd4544ab6612925b4a413d",
+      "End": "d9d70fd7848c4c69936a429cd7cde49d",
+      "Id": "d8a80e3d1d9b40ceb954246661dd1c97",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "462026bf230949f48f2976dcb152f4da",
+      "End": "cf80234ab5d6418c808e8536c8335e25",
+      "Id": "1720db8fbe4644a69d5771d41b305f52",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "824fcc0fb8224d028a1fa699e247bc32",
+      "End": "03d03191bc7a41b7befcc7847dd38632",
+      "Id": "3c10e34b44f0486c8c6295d24cdf5ed8",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "87da68aec80344f7a2ae400353e02f4b",
+      "End": "da2e001b8c874386b7ba6b6a80127c09",
+      "Id": "c9f40f179bf94bb890822a3a48767b16",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "e78ff0c9ee874d7392f6ba3812b8f6df",
+      "End": "8371f7468d494e1895570e1ea5728c67",
+      "Id": "cffb647dc3764523b2a89b13d78c3836",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "269d78a3888145838561c20b664015ba",
+      "End": "f4c4b3b9a1d0488c8c51af045da45e84",
+      "Id": "ed74f9fd6aba4d30b52714a3a909279b",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "Point Convert",
+        "ShowGeometry": true,
+        "Id": "fdddbbc1ad814dcfb4101cba3f746145",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 202.93113467119929,
+        "Y": 77.65100832131202
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "1c2adb935ea7402db3fbe0af82b1f5fb",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -160.55095772616767,
+        "Y": 78.258524354616156
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "3b68499229474b51adc1787646eda56c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -181.22259608801994,
+        "Y": 350.3089715455643
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "89619ca39acc454485940fd1954f0395",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -627.10660329664188,
+        "Y": 207.13871095481352
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "de5580e9ae9d40789b3ebee60b537f19",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 398.40528223573756,
+        "Y": 76.189659025815331
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "4dbef80e0f5145c8ae6634a33f919811",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 655.60469369836449,
+        "Y": 20.269318363815216
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "df0c9d7045084958905023d903dcb3e2",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 665.80338063604734,
+        "Y": 151.32672984905582
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "0baf9fdbbc2e4d21b5a24aab378eb772",
+        "Title": "INPUTS",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "1c2adb935ea7402db3fbe0af82b1f5fb",
+          "3b68499229474b51adc1787646eda56c",
+          "89619ca39acc454485940fd1954f0395"
+        ],
+        "HasNestedGroups": false,
+        "Left": -637.10660329664188,
+        "Top": 5.2585243546161564,
+        "Width": 780.88400720862194,
+        "Height": 477.05044719094815,
+        "FontSize": 36.0,
+        "InitialTop": 78.258524354616156,
+        "InitialHeight": 308.2668656746589,
+        "TextblockHeight": 63.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "7a18ea36d72e422fa54af6f8d8037393",
+        "Title": "Convert Points",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "fdddbbc1ad814dcfb4101cba3f746145",
+          "de5580e9ae9d40789b3ebee60b537f19"
+        ],
+        "HasNestedGroups": false,
+        "Left": 192.93113467119929,
+        "Top": 3.189659025815331,
+        "Width": 439.47414756453827,
+        "Height": 271.46134929549669,
+        "FontSize": 36.0,
+        "InitialTop": 76.189659025815331,
+        "InitialHeight": 147.5601733512168,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "d8a5eb2ce40a445fa410433943f34c90",
+        "Title": "Output",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "4dbef80e0f5145c8ae6634a33f919811",
+          "df0c9d7045084958905023d903dcb3e2"
+        ],
+        "HasNestedGroups": false,
+        "Left": 645.60469369836449,
+        "Top": -52.730681636184784,
+        "Width": 177.0,
+        "Height": 336.05741148524061,
+        "FontSize": 36.0,
+        "InitialTop": 20.269318363815216,
+        "InitialHeight": 205.73267191915454,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": 540.33901931466028,
+    "Y": 209.71240285343711,
+    "Zoom": 0.91006380393143915
+  }
+}

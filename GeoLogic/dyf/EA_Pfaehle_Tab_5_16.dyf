@@ -1,0 +1,432 @@
+{
+  "Uuid": "add6fd44-0573-4c46-998e-bbad7ebc6fba",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Calculations",
+  "Description": "Calculates q_bk and q_sk for bored piles in rock for given q_uk",
+  "Name": "EA_Pfaehle_Tab_5_16",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n# Imports for Revit / Dynamo\r\ninput0 = IN[0]\r\n\r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\nelse: to_be_flattend = False\r\n\r\ndef Tab_5_16(list):\r\n    q_sk, q_bk = [], [] \r\n    for i in list:\r\n        if i < 0.5:\r\n            q_sk.append(0)\r\n            q_bk.append(0)\r\n        elif i >= 0.5 and i < 5.0:\r\n        # Lineares interpolieren der Zwischenschritte\r\n            a = 70 + (500-70)*((i-0.5)/(5-0.5))\r\n            q_sk.append(a)\r\n            b = 1500 + (5000-1500)*((i-0.5)/(5-0.5))\r\n            q_bk.append(b)\r\n        elif i >= 5 and i < 20:\r\n            a = 500 #+ (500-500)*((i-5)/(20-5)) \r\n            q_sk.append(a)\r\n            b =  5000 + (10000-5000)*((i-5)/(20-5)) \r\n            q_bk.append(b)\r\n        elif i >= 20:\r\n            q_sk.append(500)\r\n            q_bk.append(10000)\r\n        else:\r\n            q_sk.append(\"Unexpected Error\")\r\n            q_bk.append(\"Unexpected Error\")\r\n    return q_sk, q_bk\r\n\r\nq_sk_out=Tab_5_16(input0)[0]\r\nq_bk_out=Tab_5_16(input0)[1]\r\n\r\nif to_be_flattend==True:\r\n    q_sk_out = q_sk_out[0]\r\n    q_bk_out = q_bk_out[0]\r\n\r\ndebug={\"info\":\"Calculates q_sk (skin friction) and q_bk (pile end bearing) based on a given q_uk according to 'Tabelle 5.16 der Empfehlungen des Arbeitskreises Pfähle, EA-Pfähle 2016'.\", \"Anwendungsbereich\":\"bored piles in rock soils\"}\r\n\r\n\r\nOUT = q_sk_out, q_bk_out, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "064e38b6083e4005bdc7454a03000802",
+      "Inputs": [
+        {
+          "Id": "a793b3a1c7b8431b9f3a61e9ba6fffe2",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "6b5521d05aaf4c2b8724438f2951a7f1",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e8dd30a632a349418948f03cba190d1b",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "q_uk",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "c3d203f80599496d9d6ee8befaabe2a8",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "898ada8f7b3b4c9696185ce4fbb3e8d2",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "b=a[0];\nc= a[1];\nd = a[2];",
+      "Id": "9703db1cb01a47f1b2c41a0e8ff79f16",
+      "Inputs": [
+        {
+          "Id": "2b31da52d9a24715810d4d648100cf9a",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "b92fe467a1cc4829809f915b41952612",
+          "Name": "",
+          "Description": "b",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "133565d4e55d4a84b9df638994ed8539",
+          "Name": "",
+          "Description": "c",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "bcc622371abe407da76ecf1b5e9880f5",
+          "Name": "",
+          "Description": "d",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "q_sk",
+      "Id": "a5c3b12551284fd198765c93faa8202c",
+      "Inputs": [
+        {
+          "Id": "1bb84bfe1f944379a15dd33fafa808a1",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "q_bk",
+      "Id": "1425f17baaad44e984cc0c01b5be6e08",
+      "Inputs": [
+        {
+          "Id": "578da112167e43c2b9ed7e8f514883fe",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "fac44e84fcdc456c8782830ec62e427f",
+      "Inputs": [
+        {
+          "Id": "f634916063f34500808cca048fc7a318",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm\"], [0])",
+        "Description": ""
+      },
+      "Id": "2c7c9345c6a74ef4883f4929fdd23362",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "0b812c450c244f528893642afc218884",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "e8dd30a632a349418948f03cba190d1b",
+      "End": "2b31da52d9a24715810d4d648100cf9a",
+      "Id": "7f778c6113b54cbebbdc903f160ed0e4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "898ada8f7b3b4c9696185ce4fbb3e8d2",
+      "End": "a793b3a1c7b8431b9f3a61e9ba6fffe2",
+      "Id": "27b581ccf8704d718b1c34341e7bc1d4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b92fe467a1cc4829809f915b41952612",
+      "End": "1bb84bfe1f944379a15dd33fafa808a1",
+      "Id": "ad4839e4163c44d9853a26e137118f6a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "133565d4e55d4a84b9df638994ed8539",
+      "End": "578da112167e43c2b9ed7e8f514883fe",
+      "Id": "87a61dea6c9047fda4dae9c796d21d37",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "bcc622371abe407da76ecf1b5e9880f5",
+      "End": "f634916063f34500808cca048fc7a318",
+      "Id": "cbffbeb558364e2abee64b35dee5b49f",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "0b812c450c244f528893642afc218884",
+      "End": "6b5521d05aaf4c2b8724438f2951a7f1",
+      "Id": "e2008756a3694283a80e62b7a756801d",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Name": "EA_Pfaehle_Tab5.16",
+        "ShowGeometry": true,
+        "Id": "064e38b6083e4005bdc7454a03000802",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 709.5,
+        "Y": 374.5
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "c3d203f80599496d9d6ee8befaabe2a8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 369.39776709760952,
+        "Y": 367.97556613669451
+      },
+      {
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Id": "9703db1cb01a47f1b2c41a0e8ff79f16",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 989.5,
+        "Y": 378.71333333333331
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "a5c3b12551284fd198765c93faa8202c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1262.8966293981875,
+        "Y": 362.22089937510714
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "1425f17baaad44e984cc0c01b5be6e08",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1259.16213498846,
+        "Y": 483.27966376175448
+      },
+      {
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Id": "fac44e84fcdc456c8782830ec62e427f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1258.6517979282785,
+        "Y": 605.80741696785856
+      },
+      {
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Id": "2c7c9345c6a74ef4883f4929fdd23362",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": -138.327527951359,
+        "Y": 491.56910144682865
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "bc87904d75ce45acade2442df40755a6",
+        "Title": "get q_sk and q_bk",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "064e38b6083e4005bdc7454a03000802",
+          "9703db1cb01a47f1b2c41a0e8ff79f16"
+        ],
+        "HasNestedGroups": false,
+        "Left": 699.5,
+        "Top": 301.5,
+        "Width": 478.0,
+        "Height": 235.21333333333337,
+        "FontSize": 36.0,
+        "InitialTop": 374.5,
+        "InitialHeight": 149.21333333333331,
+        "TextblockHeight": 63.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "ef73977874074a739bb6df810659f71b",
+        "Title": "INPUTS",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "c3d203f80599496d9d6ee8befaabe2a8",
+          "2c7c9345c6a74ef4883f4929fdd23362"
+        ],
+        "HasNestedGroups": false,
+        "Left": -148.327527951359,
+        "Top": 294.97556613669451,
+        "Width": 762.0,
+        "Height": 338.59353531013414,
+        "FontSize": 36.0,
+        "InitialTop": 367.97556613669451,
+        "InitialHeight": 226.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "548fc969b08f4083be568f6946170ccf",
+        "Title": "OUTPUT",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "a5c3b12551284fd198765c93faa8202c",
+          "1425f17baaad44e984cc0c01b5be6e08",
+          "fac44e84fcdc456c8782830ec62e427f"
+        ],
+        "HasNestedGroups": false,
+        "Left": 1248.6517979282785,
+        "Top": 289.22089937510714,
+        "Width": 154.49,
+        "Height": 448.58651759275142,
+        "FontSize": 36.0,
+        "InitialTop": 362.22089937510714,
+        "InitialHeight": 289.0,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": -19.599320252204734,
+    "Y": 45.637510254550989,
+    "Zoom": 0.80332159346259768
+  }
+}

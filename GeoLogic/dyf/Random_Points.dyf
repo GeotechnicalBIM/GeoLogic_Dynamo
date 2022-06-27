@@ -1,0 +1,367 @@
+{
+  "Uuid": "05682f65-33d7-4f68-b063-4e5041bf6700",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Geometry",
+  "Description": "Creates a given number of randomly placed Dynamo Points",
+  "Name": "Random_Points",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      },
+      "PolySurface": {
+        "Key": "Autodesk.DesignScript.Geometry.PolySurface",
+        "Value": "ProtoGeometry.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\ndebug = {}\r\nimport System\r\nimport sys\r\n\r\ntry:\r\n    import clr\r\n    import os\r\n    import random\r\n\r\nexcept ImportError as err:\r\n    debug.update({\"ImportError\": \"A Python Module was not found - See ImportErrorInfo. Please install. For help on using external packages see https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation\".format(used_module)})\r\n    debug.update({\"ImportErrorInfo\": \"{}\".format(err)})\r\n    \r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\nfrom Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\n\r\n\r\n#_________________________________________________\r\n# Assign Inputs IN of the python node\r\ninput0 = IN[0]\r\n\r\n#_________________________________________________\r\nif len(IN) > 1:\r\n    options = IN[1]\r\n    wfm_in = options[\"wfm_in\"] if \"wfm_in\" in options.keys() else 0\r\n    if not bool(wfm_in) or type(wfm_in)!=int:    \r\n        try:\r\n            wfm_in = int(wfm_in)\r\n        except:\r\n            wfm_in = 0\r\n    x_min = options[\"x_min\"] if \"x_min\" in options.keys() else 0\r\n    y_min = options[\"y_min\"] if \"y_min\" in options.keys() else 0\r\n    z_min = options[\"z_min\"] if \"z_min\" in options.keys() else 0\r\n\r\n    x_max = options[\"x_max\"] if \"x_max\" in options.keys() else 100\r\n    y_max = options[\"y_max\"] if \"y_max\" in options.keys() else 100\r\n    z_max = options[\"z_max\"] if \"z_max\" in options.keys() else 10\r\nelse: \r\n    wfm_in = x_min = y_min= z_min= 0\r\n    x_max = y_max = 100\r\n    z_max = 10\r\n\r\n\r\n\r\n# Allows nested lists / dicts / tuples in the input 0. Two dimensonal only. Please take care if your input are strings\r\n\r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\n    out0 = []\r\nelse: \r\n    to_be_flattend = False\r\n    out0 = []\r\n\r\n#_________________________________________________\r\ntry:\r\n    # your code here\r\n    for elem in input0:\r\n        point_collector = []\r\n        for i in range(int(elem)):\r\n            x_val = x_min + random.random() * (x_max-x_min)\r\n            y_val = y_min + random.random() * (y_max-y_min)\r\n            z_val = z_min + random.random() * (z_max-z_min)\r\n            p1 = DynamoPoint.ByCoordinates(x_val, y_val, z_val)\r\n            point_collector.append(p1)\r\n        out0.append(point_collector)        \r\n\r\n\r\n#_________________________________________________\r\n\r\n    \r\nexcept (ZeroDivisionError, ValueError, IndexError, AttributeError, NameError) as err:\r\n    debug.update({\"Error\":err})\r\ndebug.update({\"wfm_out\" : wfm_in +1})\r\n#TransactionManager.Instance.TransactionTaskDone()\r\nif to_be_flattend==True:\r\n    out0 = out0[0]\r\n\r\ndebug.update({\"info\":\"Creates random Dynamo Points. Required input is the number of points.\"})\r\ndebug.update({\"on options\":\"Takes x_min, y_min, z_min, x_max, y_max, z_max. Must be integers or floats\"})\r\n# Define Output of Dynamo Python Node\r\nOUT = out0, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "7693c9c348df47f9a5275d6d3529e523",
+      "Inputs": [
+        {
+          "Id": "22ac33e13171489bbbe4a0b3568e6caa",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a8a18ba1de8f406889726a1ca0923ae7",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5820083aaaec478b9846724007d130b6",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "NumberOfPoints",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "ec85cecc8c624150aced5ab006039b04",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2c557b72ef844c5c82a035f8c2c1a98c",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm_in\"], [0])",
+        "Description": ""
+      },
+      "Id": "d1ad8433624c4c48981ebeb0182abb8b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "e6a9e56021554f0cb7b55b81cbfe22ad",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "Points",
+      "Id": "60c18c3105754525aa1bd1fd2cebf385",
+      "Inputs": [
+        {
+          "Id": "8f45e349efbf43ee8e601ed6d9f59a42",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "8218b0ec24af4e71b0d3bf8346e9b12b",
+      "Inputs": [
+        {
+          "Id": "6830c49dbb354e0481768efd4b779289",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "points=lst[0];\ndebug=lst[1];",
+      "Id": "477e9bf8daec442baa2411149293b157",
+      "Inputs": [
+        {
+          "Id": "5822bea7243f4d3a8e9346a6326db0bb",
+          "Name": "lst",
+          "Description": "lst",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5d25df0af3c14806a4711186fd7cc754",
+          "Name": "",
+          "Description": "points",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "5153bb74a2614121bbb2ae290a2e6012",
+          "Name": "",
+          "Description": "debug",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "5820083aaaec478b9846724007d130b6",
+      "End": "5822bea7243f4d3a8e9346a6326db0bb",
+      "Id": "c3a2ad28ebfe48b1b38b01577032ef91"
+    },
+    {
+      "Start": "2c557b72ef844c5c82a035f8c2c1a98c",
+      "End": "22ac33e13171489bbbe4a0b3568e6caa",
+      "Id": "b370cb13a243485ca4c4fb5253e015c8"
+    },
+    {
+      "Start": "e6a9e56021554f0cb7b55b81cbfe22ad",
+      "End": "a8a18ba1de8f406889726a1ca0923ae7",
+      "Id": "ad9eba7b3ee945aca8b68f5693a6e204"
+    },
+    {
+      "Start": "5d25df0af3c14806a4711186fd7cc754",
+      "End": "8f45e349efbf43ee8e601ed6d9f59a42",
+      "Id": "c2bd609b79be4fc8a4cd00e643a62dcd"
+    },
+    {
+      "Start": "5153bb74a2614121bbb2ae290a2e6012",
+      "End": "6830c49dbb354e0481768efd4b779289",
+      "Id": "2292babccda343699622f0f218fd2c36"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.10.1.3976",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "Id": "7693c9c348df47f9a5275d6d3529e523",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Python Script",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 410.67602591792661,
+        "Y": 94.3974082073434
+      },
+      {
+        "Id": "ec85cecc8c624150aced5ab006039b04",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -101.62716969840801,
+        "Y": 98.0
+      },
+      {
+        "Id": "d1ad8433624c4c48981ebeb0182abb8b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -522.0,
+        "Y": 165.56893254757802
+      },
+      {
+        "Id": "60c18c3105754525aa1bd1fd2cebf385",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 902.0,
+        "Y": 87.0
+      },
+      {
+        "Id": "8218b0ec24af4e71b0d3bf8346e9b12b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 908.0,
+        "Y": 168.0
+      },
+      {
+        "Id": "477e9bf8daec442baa2411149293b157",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 563.0,
+        "Y": 107.0
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "f1b52f4ce8a64f3fa0b867b47d85e10b",
+        "Title": "INPUTS",
+        "Nodes": [
+          "ec85cecc8c624150aced5ab006039b04",
+          "d1ad8433624c4c48981ebeb0182abb8b"
+        ],
+        "Left": -532.0,
+        "Top": 45.0,
+        "Width": 728.0,
+        "Height": 197.56893254757802,
+        "FontSize": 36.0,
+        "InitialTop": 98.0,
+        "InitialHeight": 233.56893254757802,
+        "TextblockHeight": 43.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "83aae230b5b843b3a9eee4672c73d69f",
+        "Title": "Create random points",
+        "Nodes": [
+          "7693c9c348df47f9a5275d6d3529e523",
+          "477e9bf8daec442baa2411149293b157"
+        ],
+        "Left": 400.67602591792661,
+        "Top": 41.3974082073434,
+        "Width": 364.32397408207339,
+        "Height": 183.0,
+        "FontSize": 36.0,
+        "InitialTop": 94.3974082073434,
+        "InitialHeight": 160.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      },
+      {
+        "Id": "52bd6eabe0df4c3a8bc73fc2200de273",
+        "Title": "Output",
+        "Nodes": [
+          "60c18c3105754525aa1bd1fd2cebf385",
+          "8218b0ec24af4e71b0d3bf8346e9b12b"
+        ],
+        "Left": 892.0,
+        "Top": 34.0,
+        "Width": 123.45,
+        "Height": 202.0,
+        "FontSize": 36.0,
+        "InitialTop": 87.0,
+        "InitialHeight": 179.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      }
+    ],
+    "X": 281.0,
+    "Y": 179.0,
+    "Zoom": 1.0
+  }
+}

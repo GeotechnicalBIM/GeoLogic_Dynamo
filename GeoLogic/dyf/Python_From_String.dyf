@@ -1,0 +1,241 @@
+{
+  "Uuid": "b581ee3f-7c1b-4bbd-a404-1ceeeb3ac2fc",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Utils",
+  "Description": "PythonFromString with default python environment setup",
+  "Name": "Python_From_String",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n\r\n#_________________________________________________\r\n# INIT SECTION\r\n# helpers for imports\r\nusing_revit = True\r\nusing_dynamo = True\r\n\r\n# Initialize default outputs\r\ndebug = {}\r\nout0, out1, out2, out3 = [], [], [], []\r\n\r\n\r\n#_________________________________________________\r\n# IMPORT SECTION\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages. As different Autodesk products are delivered with different versions of embedded python (e.g. Revit 2022 uses 3.8.3 and Revit / Formit 2023 3.8.10), the current running version is catched\r\nimport System\r\nimport sys\r\n\r\ntry:    \r\n    dirAppLoc = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) \r\n    python_version = sys.version[:sys.version.index(\"(\")-1]\r\n    folder = (dirAppLoc + r\"\\python-{0}-embed-amd64\\Lib\\site-packages\".format(python_version))\r\n    sys.path.append(folder)\r\nexcept FileNotFoundError as err:\r\n    debug.update({\"ImportErrorPath\" : \"site-packages folder not found in your python version. Follow the instructions on  https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation\"})\r\n\r\ntry:\r\n    import clr\r\n    import os\r\n    import math\r\n    import itertools\r\n    import time\r\n    #import pandas as pd\r\n    import numpy as np\r\n    import scipy\r\nexcept (ImportError, ValueError) as err:\r\n    debug.update({\"ImportError\": \"A Python Module was not found - See ImportErrorInfo. Please install. For help on using external packages see https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation\"})\r\n    debug.update({\"ImportErrorInfo\": \"{}\".format(err)})\r\n\r\nif using_dynamo:\r\n    # Import Dynamo Geometry. Attention to names of classes, that are used by several imported libraries.\r\n    clr.AddReference(\"ProtoGeometry\")\r\n    from Autodesk.DesignScript.Geometry import *\r\n    from Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\n    from Autodesk.DesignScript.Geometry import Line as DynamoLine\r\n\r\n    # Import Color Nodes from Dynamo\r\n    clr.AddReference('DSCoreNodes')\r\n    import DSCore\r\n    from DSCore import Color\r\n\r\n    # Import GeometryColor _ Display in Dynamo\r\n    clr.AddReference('GeometryColor')\r\n    from Modifiers import GeometryColor\r\n\r\nif using_revit:\r\n    # Import RevitNodes\r\n    clr.AddReference(\"RevitNodes\")\r\n    import Revit\r\n    # Import Revit elements\r\n    from Revit.Elements import *\r\n\r\n    # Import DocumentManager and Transaction Manger\r\n    clr.AddReference(\"RevitServices\")\r\n    import RevitServices\r\n    from RevitServices.Persistence import DocumentManager\r\n    from RevitServices.Transactions import TransactionManager\r\n\r\n    # Revit API\r\n    clr.AddReference('RevitAPI')\r\n    from Autodesk.Revit.DB import *\r\n    from Autodesk.Revit.DB.Structure import *\r\n\r\n    # Revit API User Interface\r\n    clr.AddReference('RevitAPIUI')\r\n    from Autodesk.Revit.UI import *\r\n\r\n    doc = DocumentManager.Instance.CurrentDBDocument\r\n    uidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n\r\n#_________________________________________________\r\n# INPUT SECTION\r\n# Assign Inputs IN of the python node. Use UnwrapElement when working with elements from Revit in Dynamo. Uncomment Transaction Manager if working with Revit Transactions\r\n#TransactionManager.Instance.EnsureInTransaction(doc)\r\ninput0 = UnwrapElement(IN[0])\r\n\r\n\r\n\r\n# ASSIGN YOUR INPUT VARIABLE NAMES HERE\r\n\r\n\r\n    \r\n\r\n# Allows nested lists / dicts / tuples in the input IN[0]. Two dimensonal only.\r\nif not hasattr(input0, '__iter__') or isinstance(input0, str):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\nelse: \r\n    to_be_flattend = False\r\n    \r\n\r\n#_________________________________________________\r\n# MAIN SECTION\r\n\r\nexec(IN[1])\r\n\r\n#TYPE YOUR CODE HERE. LET IT BE AWESOME!\r\n\r\n\r\n\r\n#_________________________________________________    \r\n# OUTPUT SECTION        \r\n# Uncomment Transaction Manager if working with Revit Transactions\r\n#TransactionManager.Instance.TransactionTaskDone()\r\n\r\n# Flattening if input was not a list\r\nif to_be_flattend==True:\r\n    if len(out0)!=0:\r\n        out0 = out0[0]\r\n        \r\nOUT = debug, out0",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "78c1453bb8354d848b7dd6a34afc51de",
+      "Inputs": [
+        {
+          "Id": "5c5e934c7f204b0d86d48bd8898639df",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ce75f0f2b7e349358bd36b0a40182c94",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8960f828b7f041ffab16efdbfd2bc927",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "script",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": "\"pass\"",
+        "Description": ""
+      },
+      "Id": "31dab547b15340828dfeb68f2b460cab",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "6c6d3996f0f0400da144f3b3989b77b6",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "IN_0",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "b5bf4e6fa0974365ab6fe49df03ee56c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "561cce7ee3ec4cca896bdf0fddde08fe",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "OUT",
+      "Id": "205f7c30ce0846c3b8e691f881314c4b",
+      "Inputs": [
+        {
+          "Id": "8003b780ad4d4e91bb9b21fe9cdeff8f",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "8960f828b7f041ffab16efdbfd2bc927",
+      "End": "8003b780ad4d4e91bb9b21fe9cdeff8f",
+      "Id": "dc5106274fd749beb4d882d76197ed7b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "6c6d3996f0f0400da144f3b3989b77b6",
+      "End": "ce75f0f2b7e349358bd36b0a40182c94",
+      "Id": "efbdbee36ace44c58e66c44ad92104d4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "561cce7ee3ec4cca896bdf0fddde08fe",
+      "End": "5c5e934c7f204b0d86d48bd8898639df",
+      "Id": "8c72d64c4ed8484ba394dac750d87011",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Author": "None provided",
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.13.1.3887",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "78c1453bb8354d848b7dd6a34afc51de",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Python Script",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1195.0791627696531,
+        "Y": 494.57868530023944
+      },
+      {
+        "Id": "31dab547b15340828dfeb68f2b460cab",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Script",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 740.93054918957762,
+        "Y": 595.11718303425744
+      },
+      {
+        "Id": "b5bf4e6fa0974365ab6fe49df03ee56c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "IN",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 745.48559935155777,
+        "Y": 472.10298338448342
+      },
+      {
+        "Id": "205f7c30ce0846c3b8e691f881314c4b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1554.5173138247235,
+        "Y": 487.51645023504392
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "7bd1c03c465d42d4ae3ffc0fa36e5b87",
+        "Title": "Running a python script from string using exec()",
+        "DescriptionText": null,
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [],
+        "HasNestedGroups": false,
+        "Left": 730.05043026876376,
+        "Top": 364.66329450775225,
+        "Width": 0.0,
+        "Height": 0.0,
+        "FontSize": 36.0,
+        "InitialTop": 0.0,
+        "InitialHeight": 0.0,
+        "TextblockHeight": 0.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": -254.02969223100604,
+    "Y": 10.499373281554767,
+    "Zoom": 0.98264231136796565
+  }
+}

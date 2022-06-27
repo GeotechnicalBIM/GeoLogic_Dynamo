@@ -1,0 +1,422 @@
+{
+  "Uuid": "6af8fd83-fbb8-4cab-92ba-6bd0f3c7a142",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Geometry",
+  "Description": "Creates a triangulated surface given a selection of DynamoPoints. Retruns either Topo, Surfaces, PolySurface or Mesh",
+  "Name": "Triangulate_Delauny",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "Autodesk.DesignScript.Geometry.Point": {
+        "Key": "Autodesk.DesignScript.Geometry.Point",
+        "Value": "ProtoGeometry.dll"
+      },
+      "DesignScript.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      },
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\ndebug = {}\r\nimport System\r\nimport sys\r\n\r\ntry:    \r\n    dirAppLoc = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) \r\n    folder = (dirAppLoc + r'\\python-3.8.3-embed-amd64\\Lib\\site-packages')\r\n    sys.path.append(folder)\r\nexcept FileNotFoundError as err:\r\n    debug.update({\"ImportErrorPath\" : \"site-packages folder not found in {0}. Please install all a custom python package first, e.g. pandas. Therefore follow the instructions on  https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation \".format(folder)})\r\n\r\n\r\n# for rollout, add used modules in \"used_modules\" list. It is checked, if the modules can be imported and if not, a message is added to the debug output.\r\ntry:\r\n    import sys\r\n    import clr\r\n    import os   \r\n    from scipy.spatial import Delaunay\r\n    from scipy.stats.qmc import Halton\r\n    import numpy as np\r\nexcept ImportError as err:\r\n    debug.update({\"ImportError\": \"A Python Module was not found - See ImportErrorInfo. Please install. For help on using external packages see https://github.com/DynamoDS/Dynamo/wiki/Customizing-Dynamo's-Python-3-installation\".format(used_module)})\r\n    debug.update({\"ImportErrorInfo\": \"{}\".format(err)})\r\n    \r\n\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\nfrom Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\nfrom Autodesk.DesignScript.Geometry import Surface as DynamoSurface\r\n\r\n# Color Nodes from Dynamo\r\nclr.AddReference('DSCoreNodes')\r\nimport DSCore\r\nfrom DSCore import Color\r\n\r\n# Import GeometryColor _ Display in Dynamo\r\nclr.AddReference('GeometryColor')\r\nfrom Modifiers import GeometryColor\r\n\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\nimport System\r\n\r\n# Import DocumentManager and Transaction Manger\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\n# Revit API\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\n# Revit API Usier Ingerfavce\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\n# Import MeshToolkit \r\nclr.AddReference('MeshToolkit')\r\nimport Autodesk.Dynamo.MeshToolkit as mtk\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n#Preparing input from dynamo to revit\r\n#element = UnwrapElement(IN[0])\r\n#TransactionManager.Instance.EnsureInTransaction(doc)\r\n#TransactionManager.Instance.TransactionTaskDone()\r\n\r\n# Assign Inputs IN of the python node\r\n\r\ndef MeshDelauny (Pts, IntBoundaries=True, ToBeReturned=\"DynamoPolySurface\"):\r\n    Surfaces, PolySurfaces, PointsLst, PtsZ, PtsXY, Polygons = [],[],[],[],[],[]\r\n    for pt in Pts:\r\n        PtsXY.append([pt.X, pt.Y])\r\n    PointArray = np.array(PtsXY)\r\n    if ToBeReturned == \"DynamoPolygon\" or ToBeReturned == \"DynamoPolySurface\" or ToBeReturned == \"DynamoSurfaces\" or ToBeReturned ==\"DynamoMesh\":\r\n        tri = Delaunay(PointArray)\r\n        for i in tri.simplices:\r\n            sublist = []\r\n            for i2 in i:\r\n                sublist.append(Pts[int(i2)])\r\n            Polygon1 = Polygon.ByPoints(sublist)\r\n            Polygons.append(Polygon1)\r\n        if ToBeReturned == \"DynamoPolygon\":\r\n            return Polygons\r\n        #TO BE COMPLETED\r\n        #if ToBeReturned == \"DynamoMesh\":\r\n         #   DynamoMesh = Mesh.ByPointsFaceIndices(.....)\r\n         #   return DynamoMesh\r\n        if ToBeReturned in [\"DynamoSurfaces\",\"DynamoPolySurface\", \"DynamoMesh\"]:\r\n            for i in Polygons:\r\n                Surfaces.append(DynamoSurface.ByPatch(i))\r\n        if ToBeReturned == \"DynamoSurfaces\":\r\n            return Surfaces\r\n        if ToBeReturned == \"DynamoPolySurface\" or ToBeReturned == \"DynamoMesh\":\r\n            PolySurface1 = PolySurface.ByJoinedSurfaces(Surfaces)\r\n            if ToBeReturned == \"DynamoPolySurface\":\r\n                return PolySurface1\r\n            else:\r\n                mesh = mtk.Mesh.ByGeometry(PolySurface1)\r\n                return mesh\r\n            \r\ninput0 = IN[0]\r\nif len(IN) > 1:\r\n    options = IN[1]\r\n    if \"wfm_in\" in options.keys():\r\n        wfm_in = options[\"wfm_in\"]\r\n    if not bool(wfm_in) or type(wfm_in)!=int:    \r\n        try:\r\n            wfm_in = int(wfm_in)\r\n        except:\r\n            wfm_in = 0               \r\nelse: wfm_in = 0\r\n\r\n\r\n\r\nToBeReturned = IN[2]\r\n\r\n# Allows nested lists / dicts / tuples in the input 0. Two dimensonal only. \r\nif not hasattr(input0, '__iter__'):\r\n    to_be_flattend = True\r\n    input0 = [input0]\r\n    out0 = [[]]\r\nelse: \r\n    to_be_flattend = False\r\n    out0 = []\r\n\r\n\r\n\r\n\r\ntry:\r\n    Points = input0\r\n    debug.update({\"type at index 0\":type(Points[0])})\r\n    Points = [Points] if hasattr(Points[0], \"X\") else Points\r\n    if ToBeReturned in [\"Topo\", \"RvtTopo\", \"Topographie\", \"topograhy\", \"Topograhy\"]:\r\n        for point_list in Points:\r\n            out0.append(Topography.ByPoints(point_list))\r\n    else:    \r\n        ToBeReturned = \"DynamoSurfaces\" if IN[2] in [\"DynamoSurfaces\", \"Surfaces\", \"surfaces\"] else \"DynamoPolySurface\"\r\n        ToBeReturned = \"DynamoPolySurface\" if IN[2] in [\"PolySurface\", \"Polysurface\", \"polysurfce\"] else \"DynamoPolySurface\"\r\n        ToBeReturned = \"DynamoMesh\" if IN[2] in [\"Mesh\", \"DynamoMesh\", \"mesh\"] else \"DynamoPolySurface\"    \r\n        for point_list in Points:\r\n            out0.append(MeshDelauny(point_list, ToBeReturned=ToBeReturned))\r\n\r\nexcept (ZeroDivisionError, ValueError, IndexError, AttributeError, NameError, TypeError) as err:\r\n    debug.update({\"Error\":err})\r\ndebug.update({\"wfm_out\" : wfm_in +1,\r\n\"info\": \"This Node creates triangulated geometry based on Delauny Triangulation\",\r\n\"on output options\": \"Either: DynamoPolySurface, DynamoSurfaces, DynamoMesh or RvtTopo\"\r\n})\r\n\r\nif to_be_flattend==True:\r\n    out0 = out0[0]\r\n\r\n\r\nOUT = out0, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "8b4ef171d0cd4f6da303376259eabf31",
+      "Inputs": [
+        {
+          "Id": "d49d660000f849d590338b2a03744703",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "2299b611d1bb4cb98c3d54dd0d8a5f4a",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "1266e426a41846b483cae6479cbe76b1",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "01cdd8fd6fb04540acfece694662c10a",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "points",
+        "TypeName": "var",
+        "TypeRank": 1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "1802264067d94f04ba4f8b59afd965cf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "441f3cc94bcb43099725a6840d7e87d2",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "ToBeReturned",
+        "TypeName": "string",
+        "TypeRank": 0,
+        "DefaultValue": "\"PolySurface\"",
+        "Description": ""
+      },
+      "Id": "f594aa0d2eba4d5a9cd3d0e27edaa19b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "0ee71603adfa4b269b105c7e26cd712b",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "Triangulated",
+      "Id": "e0ac3f4356d2489885b1d488546fad76",
+      "Inputs": [
+        {
+          "Id": "e04677039d114398a3bc282524d47166",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "a[0];\na[1];",
+      "Id": "d0d0e4f26ef644be8c16d95313e0060f",
+      "Inputs": [
+        {
+          "Id": "b44a329520844ba38c4bd0f1daaf7f4c",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "a9f19716bd534c1dbb61b186b9722743",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f8c9d49cea0d455297bc5bf51e43a585",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "a5af75b97a9f4c0a8619396d48b501c3",
+      "Inputs": [
+        {
+          "Id": "10168dadf5c441ca8c1233124d650d5a",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm_in\"], [0])",
+        "Description": ""
+      },
+      "Id": "02290c0a52404b3da3dbe44ad46410fd",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9a6990e20046427baea5f1fb5e003ab8",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "01cdd8fd6fb04540acfece694662c10a",
+      "End": "b44a329520844ba38c4bd0f1daaf7f4c",
+      "Id": "b671e08088174bf88895f8d21a045bf2"
+    },
+    {
+      "Start": "441f3cc94bcb43099725a6840d7e87d2",
+      "End": "d49d660000f849d590338b2a03744703",
+      "Id": "216af071e1c84262917933aaa89d2e8e"
+    },
+    {
+      "Start": "0ee71603adfa4b269b105c7e26cd712b",
+      "End": "1266e426a41846b483cae6479cbe76b1",
+      "Id": "3cf08aa2d0474a51981868a9e472a02c"
+    },
+    {
+      "Start": "a9f19716bd534c1dbb61b186b9722743",
+      "End": "e04677039d114398a3bc282524d47166",
+      "Id": "76e56901d21c4ca19161553b66b4dbfb"
+    },
+    {
+      "Start": "f8c9d49cea0d455297bc5bf51e43a585",
+      "End": "10168dadf5c441ca8c1233124d650d5a",
+      "Id": "a3c15273cfb94fc3b03449051a533506"
+    },
+    {
+      "Start": "9a6990e20046427baea5f1fb5e003ab8",
+      "End": "2299b611d1bb4cb98c3d54dd0d8a5f4a",
+      "Id": "daee677399c74e30b9868925de782ffb"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.10.1.3976",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": 19.27033805847168,
+      "EyeY": 46.966411590576172,
+      "EyeZ": 34.360054016113281,
+      "LookX": -24.27033805847168,
+      "LookY": -35.966411590576172,
+      "LookZ": -42.360054016113281,
+      "UpX": -0.2022031843662262,
+      "UpY": 0.91354572772979736,
+      "UpZ": -0.35291385650634766
+    },
+    "NodeViews": [
+      {
+        "Id": "8b4ef171d0cd4f6da303376259eabf31",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Triangulate_Delauny",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 241.42682160564004,
+        "Y": 9.0
+      },
+      {
+        "Id": "1802264067d94f04ba4f8b59afd965cf",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -108.0,
+        "Y": -26.0
+      },
+      {
+        "Id": "f594aa0d2eba4d5a9cd3d0e27edaa19b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -281.0,
+        "Y": 115.0
+      },
+      {
+        "Id": "e0ac3f4356d2489885b1d488546fad76",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 772.0,
+        "Y": 20.0
+      },
+      {
+        "Id": "d0d0e4f26ef644be8c16d95313e0060f",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 528.5,
+        "Y": 13.213333333333338
+      },
+      {
+        "Id": "a5af75b97a9f4c0a8619396d48b501c3",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 772.0,
+        "Y": 80.0
+      },
+      {
+        "Id": "02290c0a52404b3da3dbe44ad46410fd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": -614.61483393571689,
+        "Y": 31.5310111805436
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "20ad778ab7744747a49f29885b060103",
+        "Title": "INPUT",
+        "Nodes": [
+          "1802264067d94f04ba4f8b59afd965cf",
+          "f594aa0d2eba4d5a9cd3d0e27edaa19b",
+          "02290c0a52404b3da3dbe44ad46410fd"
+        ],
+        "Left": -624.61483393571689,
+        "Top": -79.0,
+        "Width": 728.0,
+        "Height": 262.0,
+        "FontSize": 36.0,
+        "InitialTop": -26.0,
+        "InitialHeight": 286.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "5806c687e1e64d98be07236f20b2ceee",
+        "Title": "OUTPUT",
+        "Nodes": [
+          "e0ac3f4356d2489885b1d488546fad76",
+          "a5af75b97a9f4c0a8619396d48b501c3"
+        ],
+        "Left": 762.0,
+        "Top": -33.0,
+        "Width": 170.0,
+        "Height": 181.0,
+        "FontSize": 36.0,
+        "InitialTop": 20.0,
+        "InitialHeight": 205.0,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      },
+      {
+        "Id": "3c1163842d44478b92435941fb5fd3c7",
+        "Title": "Triangulate Delauny",
+        "Nodes": [
+          "8b4ef171d0cd4f6da303376259eabf31",
+          "d0d0e4f26ef644be8c16d95313e0060f"
+        ],
+        "Left": 231.42682160564004,
+        "Top": -44.0,
+        "Width": 418.07317839435996,
+        "Height": 209.0,
+        "FontSize": 36.0,
+        "InitialTop": 9.0,
+        "InitialHeight": 149.21333333333334,
+        "TextblockHeight": 43.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": 556.37336558316713,
+    "Y": 360.87071027519841,
+    "Zoom": 0.84761857199822666
+  }
+}

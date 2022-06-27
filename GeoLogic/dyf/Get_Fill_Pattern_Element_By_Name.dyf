@@ -1,0 +1,363 @@
+{
+  "Uuid": "20f0d5d0-bc22-4e68-8f1a-2ead2057f9cc",
+  "IsCustomNode": true,
+  "Category": "GeoLogic.Utils",
+  "Description": "Gets a Fill Pattern Element given its name as a string. Fill pattern needs to be inside current Revit doc.",
+  "Name": "Get_Fill_Pattern_Element_By_Name",
+  "ElementResolver": {
+    "ResolutionMap": {
+      "DesignScript.Builtin.Dictionary": {
+        "Key": "DesignScript.Builtin.Dictionary",
+        "Value": "DesignScriptBuiltin.dll"
+      }
+    }
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# This node is developed by Johannes Beck, 2022.\r\n# Contact: geotechnicalbim@gmail.com\r\n\r\n\r\n# Testet against Revit 2022\r\n\r\n\r\n\r\n# Imports for Revit / Dynamo\r\n# Append path for site packages\r\nimport System\r\ndebug = {}\r\n\r\nimport sys\r\nimport clr\r\nimport os\r\n\r\n\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\nfrom Autodesk.DesignScript.Geometry import Point as DynamoPoint\r\n\r\n# Color Nodes from Dynamo\r\nclr.AddReference('DSCoreNodes')\r\nimport DSCore\r\nfrom DSCore import Color\r\n\r\n# Import GeometryColor _ Display in Dynamo\r\nclr.AddReference('GeometryColor')\r\nfrom Modifiers import GeometryColor\r\n\r\n# Import RevitNodes\r\nclr.AddReference(\"RevitNodes\")\r\nimport Revit\r\n\r\n# Import Revit elements\r\nfrom Revit.Elements import *\r\nimport System\r\n\r\n# Import DocumentManager and Transaction Manger\r\nclr.AddReference(\"RevitServices\")\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\n# Revit API\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\n# Revit API Usier Ingerfavce\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n#Preparing input from dynamo to revit\r\n#element = UnwrapElement(IN[0])\r\n\r\n\r\n# Assign Inputs IN of the python node\r\ninput0 = IN[0]\r\nif len(IN) > 1:\r\n    options = IN[1]\r\n    wfm_in = options[\"wfm_in\"] if \"wfm_in\" in options.keys() else 0\r\n    if not bool(wfm_in) or type(wfm_in)!=int:    \r\n        try:\r\n            wfm_in = int(wfm_in)\r\n        except:\r\n            wfm_in = 0               \r\nelse: wfm_in = 0\r\n\r\n\r\nto_be_flattend = False\r\nout0 = []\r\n\r\nif not isinstance(input0, list) or len(input0)<2:\r\n    input0=[input0]\r\n    \r\n\r\nTransactionManager.Instance.EnsureInTransaction(doc)\r\nif len(input0)>=1:\r\n    for str in input0:\r\n        if isinstance(str, list):\r\n            str = str[0]\r\n        pat=FillPatternElement.GetFillPatternElementByName(doc,  FillPatternTarget.Drafting, str)  \r\n        out0.append(pat)\r\nelse:\r\n    str=input0[0]\r\n    pat=FillPatternElement.GetFillPatternElementByName(doc,  FillPatternTarget.Drafting, str)  \r\n    out0.append(pat)\r\n\r\n\r\nTransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\ntry:\r\n    # your code here\r\n    pass\r\n\r\n\r\nexcept (ZeroDivisionError, ValueError, IndexError, AttributeError, NameError) as err:\r\n    debug.update({\"Error\":err})\r\ndebug.update({\"wfm_out\" : wfm_in +1})\r\n\r\nif to_be_flattend==True:\r\n    out0 = out0[0]\r\n\r\n\r\nOUT = out0, debug\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "243ff5f400384e2fb2050061fb0bfc63",
+      "Inputs": [
+        {
+          "Id": "3ce4a49ccff04421a9375ac1a8eb6f9b",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b13467cd1d9c48688c3d126eb63d3c28",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "df946f138aef426e9ad92cfdedf7dd28",
+          "Name": "OUT",
+          "Description": "Ergebnis des Python-Skripts",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Führt ein eingebettetes Python-Skript aus."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "a[0];\na[1];",
+      "Id": "a82d92702b7b4c02a2fff0a6e078e986",
+      "Inputs": [
+        {
+          "Id": "01bf5a01029d48a39bc1ce808414a925",
+          "Name": "a",
+          "Description": "a",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8268c588ee9548c3a8ed5aabc8a430c6",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3fc4cd64a6d84d419a913aad6b47b483",
+          "Name": "",
+          "Description": "Wert des Ausdrucks in Zeile 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ermöglicht die direkte Erstellung von DesignScript-Code."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "PatternElement",
+      "Id": "1296edcc5b3046d9ad60b2434c05c66d",
+      "Inputs": [
+        {
+          "Id": "5c21f3b1a4f34cd4bb53af4aaa3734c0",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "debug",
+      "Id": "c63ffeb5dee64b9c989c64861900e8af",
+      "Inputs": [
+        {
+          "Id": "539b859d0a4f4363bf40b33cbab33fc8",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "Eine Funktionsausgabe zur Verwendung mit benutzerdefinierten Blöcken"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "NameOfPattern",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "09d04a3659094d2e8c4b470212f0e7cf",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4c5370b174fe4ab68b832ad3bae2e52c",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "options",
+        "TypeName": "DesignScript.Builtin.Dictionary",
+        "TypeRank": 0,
+        "DefaultValue": "DesignScript.Builtin.Dictionary.ByKeysValues([\"wfm_in\"], [0])",
+        "Description": ""
+      },
+      "Id": "63b3e608ca3f4e478465743f75c4f1af",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "eb2b1e88b41b4649a517dc65d6f0dc3e",
+          "Name": "",
+          "Description": "Symbol",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Ein Funktionsparameter zur Verwendung mit benutzerdefinierten Blöcken.\r\n\r\nSie können den Typ und den Vorgabewert für den Parameter angeben, z. B.\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "df946f138aef426e9ad92cfdedf7dd28",
+      "End": "01bf5a01029d48a39bc1ce808414a925",
+      "Id": "64b1af5732654dd89eb40735c4924ac1"
+    },
+    {
+      "Start": "8268c588ee9548c3a8ed5aabc8a430c6",
+      "End": "5c21f3b1a4f34cd4bb53af4aaa3734c0",
+      "Id": "4ad6af56c05b4e5fb72819c4b76f5e80"
+    },
+    {
+      "Start": "3fc4cd64a6d84d419a913aad6b47b483",
+      "End": "539b859d0a4f4363bf40b33cbab33fc8",
+      "Id": "ee15a71c770248418b96c023bf07a1d5"
+    },
+    {
+      "Start": "4c5370b174fe4ab68b832ad3bae2e52c",
+      "End": "3ce4a49ccff04421a9375ac1a8eb6f9b",
+      "Id": "df47675cc34840b09c66c3c3637fe053"
+    },
+    {
+      "Start": "eb2b1e88b41b4649a517dc65d6f0dc3e",
+      "End": "b13467cd1d9c48688c3d126eb63d3c28",
+      "Id": "8bded7b8b1df421cb2d372bc27b6e758"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.10.1.3976",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Hintergrundvorschau",
+      "EyeX": 19.27033805847168,
+      "EyeY": 46.966411590576172,
+      "EyeZ": 34.360054016113281,
+      "LookX": -24.27033805847168,
+      "LookY": -35.966411590576172,
+      "LookZ": -42.360054016113281,
+      "UpX": -0.2022031843662262,
+      "UpY": 0.91354572772979736,
+      "UpZ": -0.35291385650634766
+    },
+    "NodeViews": [
+      {
+        "Id": "243ff5f400384e2fb2050061fb0bfc63",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "GetPatternByName",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 2073.0492210005518,
+        "Y": 669.98706366679266
+      },
+      {
+        "Id": "a82d92702b7b4c02a2fff0a6e078e986",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Code Block",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 2348.3436116574658,
+        "Y": 666.78105123964008
+      },
+      {
+        "Id": "1296edcc5b3046d9ad60b2434c05c66d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 2597.1657129534206,
+        "Y": 652.42493063764141
+      },
+      {
+        "Id": "c63ffeb5dee64b9c989c64861900e8af",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Output",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 2610.7408779325706,
+        "Y": 725.11290894648153
+      },
+      {
+        "Id": "09d04a3659094d2e8c4b470212f0e7cf",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1637.5120923126237,
+        "Y": 660.14093099400407
+      },
+      {
+        "Id": "63b3e608ca3f4e478465743f75c4f1af",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Input",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 1269.854330154453,
+        "Y": 753.05661816251779
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "1c6c81a4fb8d48398e84879887124a3c",
+        "Title": "Input",
+        "Nodes": [
+          "09d04a3659094d2e8c4b470212f0e7cf",
+          "63b3e608ca3f4e478465743f75c4f1af"
+        ],
+        "Left": 1259.854330154453,
+        "Top": 607.14093099400407,
+        "Width": 728.0,
+        "Height": 222.91568716851373,
+        "FontSize": 36.0,
+        "InitialTop": 660.14093099400407,
+        "InitialHeight": 237.91568716851373,
+        "TextblockHeight": 43.0,
+        "Background": "#FF848484"
+      },
+      {
+        "Id": "63009b39f12446629694ef241f2a7c42",
+        "Title": "OUTPUT",
+        "Nodes": [
+          "1296edcc5b3046d9ad60b2434c05c66d",
+          "c63ffeb5dee64b9c989c64861900e8af"
+        ],
+        "Left": 2587.1657129534206,
+        "Top": 599.42493063764141,
+        "Width": 186.0,
+        "Height": 193.68797830884012,
+        "FontSize": 36.0,
+        "InitialTop": 652.42493063764141,
+        "InitialHeight": 217.68797830884012,
+        "TextblockHeight": 43.0,
+        "Background": "#FFFF7BAC"
+      },
+      {
+        "Id": "29442a8a52e147b8b82067e2117c3c1d",
+        "Title": "Get Pattern by a given string",
+        "Nodes": [
+          "243ff5f400384e2fb2050061fb0bfc63",
+          "a82d92702b7b4c02a2fff0a6e078e986"
+        ],
+        "Left": 2063.0492210005518,
+        "Top": 570.78105123964008,
+        "Width": 406.29439065691395,
+        "Height": 229.20601242715259,
+        "FontSize": 36.0,
+        "InitialTop": 666.78105123964008,
+        "InitialHeight": 148.20601242715259,
+        "TextblockHeight": 86.0,
+        "Background": "#FFC1D676"
+      }
+    ],
+    "X": -803.23389241364271,
+    "Y": -7.1098150632004717,
+    "Zoom": 0.74769281712332525
+  }
+}
